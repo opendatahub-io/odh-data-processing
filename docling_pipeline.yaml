@@ -1,0 +1,247 @@
+# PIPELINE DEFINITION
+# Name: convert-pipeline
+components:
+  comp-create-pdf-splits:
+    executorLabel: exec-create-pdf-splits
+    inputDefinitions:
+      artifacts:
+        input_path:
+          artifactType:
+            schemaTitle: system.Artifact
+            schemaVersion: 0.0.1
+      parameters:
+        num_splits:
+          parameterType: NUMBER_INTEGER
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: LIST
+  comp-docling-convert:
+    executorLabel: exec-docling-convert
+    inputDefinitions:
+      artifacts:
+        input_path:
+          artifactType:
+            schemaTitle: system.Artifact
+            schemaVersion: 0.0.1
+      parameters:
+        pdf_split:
+          parameterType: LIST
+    outputDefinitions:
+      artifacts:
+        output_path:
+          artifactType:
+            schemaTitle: system.Artifact
+            schemaVersion: 0.0.1
+  comp-for-loop-1:
+    dag:
+      tasks:
+        docling-convert:
+          cachingOptions:
+            enableCache: true
+          componentRef:
+            name: comp-docling-convert
+          inputs:
+            artifacts:
+              input_path:
+                componentInputArtifact: pipelinechannel--import-test-pdfs-output_path
+            parameters:
+              pdf_split:
+                componentInputParameter: pipelinechannel--create-pdf-splits-Output-loop-item
+          taskInfo:
+            name: docling-convert
+    inputDefinitions:
+      artifacts:
+        pipelinechannel--import-test-pdfs-output_path:
+          artifactType:
+            schemaTitle: system.Artifact
+            schemaVersion: 0.0.1
+      parameters:
+        pipelinechannel--create-pdf-splits-Output:
+          parameterType: LIST
+        pipelinechannel--create-pdf-splits-Output-loop-item:
+          parameterType: LIST
+  comp-import-test-pdfs:
+    executorLabel: exec-import-test-pdfs
+    outputDefinitions:
+      artifacts:
+        output_path:
+          artifactType:
+            schemaTitle: system.Artifact
+            schemaVersion: 0.0.1
+deploymentSpec:
+  executors:
+    exec-create-pdf-splits:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - create_pdf_splits
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.12.0'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
+          $0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef create_pdf_splits(\n    input_path: dsl.InputPath(\"Directory\"\
+          ),\n    num_splits: int,\n) -> List[List[str]]:\n    import pathlib\n\n\
+          \    # Split our entire directory of pdfs into n batches, where n == num_splits\n\
+          \    all_pdfs = [path.name for path in pathlib.Path(input_path).glob(\"\
+          *.pdf\")]\n    splits = [all_pdfs[i::num_splits] for i in range(num_splits)]\n\
+          \    return splits\n\n"
+        image: python:3.10
+    exec-docling-convert:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - docling_convert
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.12.0'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
+          $0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef docling_convert(\n    input_path: dsl.InputPath(\"Directory\"\
+          ),\n    pdf_split: List[str],\n    output_path: dsl.OutputPath(\"Directory\"\
+          ),\n):\n    import pathlib\n    import os\n\n    from docling_core.types.doc\
+          \ import ImageRefMode\n    from docling.datamodel.base_models import ConversionStatus,\
+          \ InputFormat\n    from docling.datamodel.pipeline_options import PdfPipelineOptions\n\
+          \    from docling.document_converter import DocumentConverter, PdfFormatOption\n\
+          \n    input_path = pathlib.Path(input_path)\n    output_path = pathlib.Path(output_path)\n\
+          \    output_path.mkdir(parents=True, exist_ok=True)\n\n    input_pdfs =\
+          \ [input_path / name for name in pdf_split]\n\n    pipeline_options = PdfPipelineOptions()\n\
+          \    pipeline_options.generate_page_images = True\n\n    doc_converter =\
+          \ DocumentConverter(\n        format_options={\n            InputFormat.PDF:\
+          \ PdfFormatOption(pipeline_options=pipeline_options)\n        }\n    )\n\
+          \n    conv_results = doc_converter.convert_all(\n        input_pdfs,\n \
+          \       raises_on_error=True,\n    )\n\n    for conv_res in conv_results:\n\
+          \        # TODO: handle errors, record success/failure somewhere - via\n\
+          \        # calling some API, writing to some shared storage, or\n      \
+          \  # something else that each parallel task can do independently\n     \
+          \   doc_filename = conv_res.input.file.stem\n        output_json_path =\
+          \ pathlib.Path(output_path) / f\"{doc_filename}.json\"\n        conv_res.document.save_as_json(\n\
+          \            output_json_path,\n            image_mode=ImageRefMode.PLACEHOLDER,\n\
+          \        )\n\n"
+        image: quay.io/bbrowning/docling-kfp:v2.25.0
+    exec-import-test-pdfs:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - import_test_pdfs
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.12.0'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"'  &&\
+          \  python3 -m pip install --quiet --no-warn-script-location 'gitpython'\
+          \ && \"$0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef import_test_pdfs(\n    output_path: dsl.OutputPath(\"Directory\"\
+          ),\n):\n    import os\n    import shutil\n    from git import Repo\n\n \
+          \   docling_github_repo = \"https://github.com/DS4SD/docling/\"\n    full_repo_path\
+          \ = os.path.join(output_path, \"docling\")\n    Repo.clone_from(docling_github_repo,\
+          \ full_repo_path, branch=\"v2.25.0\")\n\n    # Copy some tests pdf up to\
+          \ the root of our output folder\n    pdfs_path = os.path.join(full_repo_path,\
+          \ \"tests\", \"data\", \"pdf\")\n    shutil.copytree(pdfs_path, output_path,\
+          \ dirs_exist_ok=True)\n\n    # Delete the rest of the docling repo, leaving\
+          \ only the PDFs\n    shutil.rmtree(full_repo_path)\n\n"
+        image: python:3.10
+pipelineInfo:
+  name: convert-pipeline
+root:
+  dag:
+    tasks:
+      create-pdf-splits:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-create-pdf-splits
+        dependentTasks:
+        - import-test-pdfs
+        inputs:
+          artifacts:
+            input_path:
+              taskOutputArtifact:
+                outputArtifactKey: output_path
+                producerTask: import-test-pdfs
+          parameters:
+            num_splits:
+              runtimeValue:
+                constant: 3.0
+        taskInfo:
+          name: create-pdf-splits
+      for-loop-1:
+        componentRef:
+          name: comp-for-loop-1
+        dependentTasks:
+        - create-pdf-splits
+        - import-test-pdfs
+        inputs:
+          artifacts:
+            pipelinechannel--import-test-pdfs-output_path:
+              taskOutputArtifact:
+                outputArtifactKey: output_path
+                producerTask: import-test-pdfs
+          parameters:
+            pipelinechannel--create-pdf-splits-Output:
+              taskOutputParameter:
+                outputParameterKey: Output
+                producerTask: create-pdf-splits
+        parameterIterator:
+          itemInput: pipelinechannel--create-pdf-splits-Output-loop-item
+          items:
+            inputParameter: pipelinechannel--create-pdf-splits-Output
+        taskInfo:
+          name: for-loop-1
+      import-test-pdfs:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-import-test-pdfs
+        taskInfo:
+          name: import-test-pdfs
+schemaVersion: 2.1.0
+sdkVersion: kfp-2.12.0
