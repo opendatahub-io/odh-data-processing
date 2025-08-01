@@ -83,7 +83,7 @@ deploymentSpec:
         - -c
         - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
           \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
-          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.12.0'\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.13.0'\
           \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
           $0\" \"$@\"\n"
         - sh
@@ -103,7 +103,7 @@ deploymentSpec:
           \    all_pdfs = [path.name for path in pathlib.Path(input_path).glob(\"\
           *.pdf\")]\n    splits = [all_pdfs[i::num_splits] for i in range(num_splits)]\n\
           \    return splits\n\n"
-        image: python:3.10
+        image: python:3.11
     exec-docling-convert:
       container:
         args:
@@ -116,7 +116,7 @@ deploymentSpec:
         - -c
         - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
           \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
-          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.12.0'\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.13.0'\
           \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
           $0\" \"$@\"\n"
         - sh
@@ -151,7 +151,7 @@ deploymentSpec:
           \ pathlib.Path(output_path) / f\"{doc_filename}.json\"\n        conv_res.document.save_as_json(\n\
           \            output_json_path,\n            image_mode=ImageRefMode.PLACEHOLDER,\n\
           \        )\n\n"
-        image: quay.io/bbrowning/docling-kfp:v2.25.0
+        image: quay.io/fabianofranz/docling:v2.43.0
     exec-import-test-pdfs:
       container:
         args:
@@ -164,7 +164,7 @@ deploymentSpec:
         - -c
         - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
           \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
-          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.12.0'\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.13.0'\
           \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"'  &&\
           \  python3 -m pip install --quiet --no-warn-script-location 'gitpython'\
           \ && \"$0\" \"$@\"\n"
@@ -181,14 +181,14 @@ deploymentSpec:
         - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
           \ *\n\ndef import_test_pdfs(\n    output_path: dsl.OutputPath(\"Directory\"\
           ),\n):\n    import os\n    import shutil\n    from git import Repo\n\n \
-          \   docling_github_repo = \"https://github.com/DS4SD/docling/\"\n    full_repo_path\
-          \ = os.path.join(output_path, \"docling\")\n    Repo.clone_from(docling_github_repo,\
-          \ full_repo_path, branch=\"v2.25.0\")\n\n    # Copy some tests pdf up to\
+          \   docling_github_repo = \"https://github.com/docling-project/docling/\"\
+          \n    full_repo_path = os.path.join(output_path, \"docling\")\n    Repo.clone_from(docling_github_repo,\
+          \ full_repo_path, branch=\"v2.43.0\")\n\n    # Copy some tests pdf up to\
           \ the root of our output folder\n    pdfs_path = os.path.join(full_repo_path,\
           \ \"tests\", \"data\", \"pdf\")\n    shutil.copytree(pdfs_path, output_path,\
           \ dirs_exist_ok=True)\n\n    # Delete the rest of the docling repo, leaving\
           \ only the PDFs\n    shutil.rmtree(full_repo_path)\n\n"
-        image: python:3.10
+        image: python:3.11
 pipelineInfo:
   name: convert-pipeline
 root:
@@ -244,4 +244,4 @@ root:
         taskInfo:
           name: import-test-pdfs
 schemaVersion: 2.1.0
-sdkVersion: kfp-2.12.0
+sdkVersion: kfp-2.13.0

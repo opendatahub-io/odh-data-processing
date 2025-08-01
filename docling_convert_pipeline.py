@@ -4,7 +4,7 @@ from typing import List
 
 from kfp import dsl
 
-PYTHON_BASE_IMAGE = "python:3.10"
+PYTHON_BASE_IMAGE = "python:3.11"
 
 @dsl.component(
     base_image=PYTHON_BASE_IMAGE,
@@ -17,9 +17,9 @@ def import_test_pdfs(
     import shutil
     from git import Repo
 
-    docling_github_repo = "https://github.com/DS4SD/docling/"
+    docling_github_repo = "https://github.com/docling-project/docling/"
     full_repo_path = os.path.join(output_path, "docling")
-    Repo.clone_from(docling_github_repo, full_repo_path, branch="v2.25.0")
+    Repo.clone_from(docling_github_repo, full_repo_path, branch="v2.43.0")
 
     # Copy some tests pdf up to the root of our output folder
     pdfs_path = os.path.join(full_repo_path, "tests", "data", "pdf")
@@ -43,9 +43,9 @@ def create_pdf_splits(
     return splits
 
 # A Docling container built from
-# https://github.com/DS4SD/docling/blob/v2.25.0/Dockerfile
+# https://github.com/docling-project/docling/blob/v2.43.0/Dockerfile
 @dsl.component(
-    base_image="quay.io/bbrowning/docling-kfp:v2.25.0",
+    base_image="quay.io/fabianofranz/docling:v2.43.0",
 )
 def docling_convert(
     input_path: dsl.InputPath("Directory"),
