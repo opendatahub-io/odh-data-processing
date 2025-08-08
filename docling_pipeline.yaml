@@ -1,5 +1,7 @@
 # PIPELINE DEFINITION
 # Name: convert-pipeline
+# Inputs:
+#    num_splits: int [Default: 3.0]
 components:
   comp-create-pdf-splits:
     executorLabel: exec-create-pdf-splits
@@ -83,7 +85,7 @@ deploymentSpec:
         - -c
         - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
           \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
-          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.13.0'\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.14.2'\
           \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
           $0\" \"$@\"\n"
         - sh
@@ -116,7 +118,7 @@ deploymentSpec:
         - -c
         - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
           \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
-          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.13.0'\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.14.2'\
           \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
           $0\" \"$@\"\n"
         - sh
@@ -164,10 +166,10 @@ deploymentSpec:
         - -c
         - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
           \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
-          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.13.0'\
-          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"'  &&\
-          \  python3 -m pip install --quiet --no-warn-script-location 'gitpython'\
-          \ && \"$0\" \"$@\"\n"
+          \ python3 -m pip install --quiet --no-warn-script-location 'gitpython' \
+          \ &&  python3 -m pip install --quiet --no-warn-script-location 'kfp==2.14.2'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
+          $0\" \"$@\"\n"
         - sh
         - -ec
         - 'program_path=$(mktemp -d)
@@ -209,8 +211,7 @@ root:
                 producerTask: import-test-pdfs
           parameters:
             num_splits:
-              runtimeValue:
-                constant: 3.0
+              componentInputParameter: num_splits
         taskInfo:
           name: create-pdf-splits
       for-loop-1:
@@ -243,5 +244,11 @@ root:
           name: comp-import-test-pdfs
         taskInfo:
           name: import-test-pdfs
+  inputDefinitions:
+    parameters:
+      num_splits:
+        defaultValue: 3.0
+        isOptional: true
+        parameterType: NUMBER_INTEGER
 schemaVersion: 2.1.0
-sdkVersion: kfp-2.13.0
+sdkVersion: kfp-2.14.2

@@ -92,12 +92,12 @@ def docling_convert(
         )
 
 @dsl.pipeline()
-def convert_pipeline():
+def convert_pipeline(num_splits: int = 3):
     importer = import_test_pdfs()
 
     pdf_splits = create_pdf_splits(
         input_path=importer.output,
-        num_splits=3,
+        num_splits=num_splits,
     )
 
     with dsl.ParallelFor(pdf_splits.output) as pdf_split:
