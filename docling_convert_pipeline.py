@@ -11,19 +11,19 @@ PYTHON_BASE_IMAGE = "python:3.11"
     packages_to_install=["gitpython"],
 )
 def import_test_pdfs(
-    output_path: dsl.OutputPath("Directory"),
+    output_path: dsl.Output[dsl.Artifact],
 ):
     import os
     import shutil
     from git import Repo
 
     docling_github_repo = "https://github.com/docling-project/docling/"
-    full_repo_path = os.path.join(output_path, "docling")
+    full_repo_path = os.path.join(output_path.path, "docling")
     Repo.clone_from(docling_github_repo, full_repo_path, branch="v2.43.0")
 
     # Copy some tests pdf up to the root of our output folder
     pdfs_path = os.path.join(full_repo_path, "tests", "data", "pdf")
-    shutil.copytree(pdfs_path, output_path, dirs_exist_ok=True)
+    shutil.copytree(pdfs_path, output_path.path, dirs_exist_ok=True)
 
     # Delete the rest of the docling repo, leaving only the PDFs
     shutil.rmtree(full_repo_path)
@@ -32,13 +32,13 @@ def import_test_pdfs(
     base_image=PYTHON_BASE_IMAGE,
 )
 def create_pdf_splits(
-    input_path: dsl.InputPath("Directory"),
+    input_path: dsl.Input[dsl.Artifact],
     num_splits: int,
 ) -> List[List[str]]:
     import pathlib
 
     # Split our entire directory of pdfs into n batches, where n == num_splits
-    all_pdfs = [path.name for path in pathlib.Path(input_path).glob("*.pdf")]
+    all_pdfs = [path.name for path in pathlib.Path(input_path.path).glob("*.pdf")]
     splits = [all_pdfs[i::num_splits] for i in range(num_splits)]
     return splits
 
@@ -48,20 +48,22 @@ def create_pdf_splits(
     base_image="quay.io/fabianofranz/docling:v2.43.0",
 )
 def docling_convert(
-    input_path: dsl.InputPath("Directory"),
+    input_path: dsl.Input[dsl.Artifact],
     pdf_split: List[str],
-    output_path: dsl.OutputPath("Directory"),
+    pdf_backend: str,
+    output_path: dsl.Output[dsl.Artifact],
 ):
     import pathlib
     import os
+    from importlib import import_module
 
-    from docling_core.types.doc import ImageRefMode
+    from docling_core.types.doc.base import ImageRefMode
     from docling.datamodel.base_models import ConversionStatus, InputFormat
-    from docling.datamodel.pipeline_options import PdfPipelineOptions
+    from docling.datamodel.pipeline_options import PdfPipelineOptions, PdfBackend
     from docling.document_converter import DocumentConverter, PdfFormatOption
 
-    input_path = pathlib.Path(input_path)
-    output_path = pathlib.Path(output_path)
+    input_path = pathlib.Path(input_path.path)
+    output_path = pathlib.Path(output_path.path)
     output_path.mkdir(parents=True, exist_ok=True)
 
     input_pdfs = [input_path / name for name in pdf_split]
@@ -69,9 +71,42 @@ def docling_convert(
     pipeline_options = PdfPipelineOptions()
     pipeline_options.generate_page_images = True
 
+    # Validate and resolve backend class from provided string using PdfBackend enum
+    allowed_backends = {e.value for e in PdfBackend}
+    if pdf_backend not in allowed_backends:
+        raise ValueError(
+            f"Invalid pdf_backend: {pdf_backend}. Must be one of {sorted(allowed_backends)}"
+        )
+
+    backend_to_impl = {
+        PdfBackend.PYPDFIUM2.value: (
+            "docling.backend.pypdfium2_backend",
+            "PyPdfiumDocumentBackend",
+        ),
+        PdfBackend.DLPARSE_V1.value: (
+            "docling.backend.docling_parse_backend",
+            "DoclingParseDocumentBackend",
+        ),
+        PdfBackend.DLPARSE_V2.value: (
+            "docling.backend.docling_parse_v2_backend",
+            "DoclingParseV2DocumentBackend",
+        ),
+        PdfBackend.DLPARSE_V4.value: (
+            "docling.backend.docling_parse_v4_backend",
+            "DoclingParseV4DocumentBackend",
+        ),
+    }
+
+    module_name, class_name = backend_to_impl[pdf_backend]
+
+    backend_class = getattr(import_module(module_name), class_name)
+
     doc_converter = DocumentConverter(
         format_options={
-            InputFormat.PDF: PdfFormatOption(pipeline_options=pipeline_options)
+            InputFormat.PDF: PdfFormatOption(
+                pipeline_options=pipeline_options,
+                backend=backend_class,
+            )
         }
     )
 
@@ -92,18 +127,19 @@ def docling_convert(
         )
 
 @dsl.pipeline()
-def convert_pipeline(num_splits: int = 3):
+def convert_pipeline(num_splits: int = 3, pdf_backend: str = "dlparse_v4"):
     importer = import_test_pdfs()
 
     pdf_splits = create_pdf_splits(
-        input_path=importer.output,
+        input_path=importer.outputs["output_path"],
         num_splits=num_splits,
     )
 
     with dsl.ParallelFor(pdf_splits.output) as pdf_split:
         docling_convert(
-            input_path=importer.output,
+            input_path=importer.outputs["output_path"],
             pdf_split=pdf_split,
+            pdf_backend=pdf_backend,
         )
 
 if __name__ == '__main__':
