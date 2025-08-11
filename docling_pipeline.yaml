@@ -92,7 +92,7 @@ deploymentSpec:
         - -c
         - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
           \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
-          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.14.2'\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.13.0'\
           \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
           $0\" \"$@\"\n"
         - sh
@@ -108,10 +108,9 @@ deploymentSpec:
         - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
           \ *\n\ndef create_pdf_splits(\n    input_path: dsl.Input[dsl.Artifact],\n\
           \    num_splits: int,\n) -> List[List[str]]:\n    import pathlib\n\n   \
-          \ # Split our entire directory of pdfs into n batches, where n == num_splits\n\
-          \    all_pdfs = [path.name for path in pathlib.Path(input_path.path).glob(\"\
-          *.pdf\")]\n    splits = [all_pdfs[i::num_splits] for i in range(num_splits)]\n\
-          \    return splits\n\n"
+          \ all_pdfs = [path.name for path in pathlib.Path(input_path.path).glob(\"\
+          *.pdf\")]\n    return [all_pdfs[i::num_splits] for i in range(num_splits)]\n\
+          \n"
         image: python:3.11
     exec-docling-convert:
       container:
@@ -125,7 +124,7 @@ deploymentSpec:
         - -c
         - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
           \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
-          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.14.2'\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.13.0'\
           \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
           $0\" \"$@\"\n"
         - sh
@@ -143,16 +142,16 @@ deploymentSpec:
           \    pdf_split: List[str],\n    pdf_backend: str,\n    output_path: dsl.Output[dsl.Artifact],\n\
           ):\n    import pathlib\n    import os\n    from importlib import import_module\n\
           \n    from docling_core.types.doc.base import ImageRefMode\n    from docling.datamodel.base_models\
-          \ import ConversionStatus, InputFormat\n    from docling.datamodel.pipeline_options\
-          \ import PdfPipelineOptions, PdfBackend\n    from docling.document_converter\
-          \ import DocumentConverter, PdfFormatOption\n\n    input_path = pathlib.Path(input_path.path)\n\
-          \    output_path = pathlib.Path(output_path.path)\n    output_path.mkdir(parents=True,\
-          \ exist_ok=True)\n\n    input_pdfs = [input_path / name for name in pdf_split]\n\
+          \ import InputFormat\n    from docling.datamodel.pipeline_options import\
+          \ PdfPipelineOptions, PdfBackend\n    from docling.document_converter import\
+          \ DocumentConverter, PdfFormatOption\n\n    os.environ[\"DOCLING_ARTIFACTS_PATH\"\
+          ] = \"/opt/app-root/src/.cache/docling/models\"\n\n    input_dir_p = pathlib.Path(input_path.path)\n\
+          \    output_dir_p = pathlib.Path(output_path.path)\n    output_dir_p.mkdir(parents=True,\
+          \ exist_ok=True)\n\n    input_pdfs = [input_dir_p / name for name in pdf_split]\n\
           \n    pipeline_options = PdfPipelineOptions()\n    pipeline_options.generate_page_images\
-          \ = True\n\n    # Validate and resolve backend class from provided string\
-          \ using PdfBackend enum\n    allowed_backends = {e.value for e in PdfBackend}\n\
-          \    if pdf_backend not in allowed_backends:\n        raise ValueError(\n\
-          \            f\"Invalid pdf_backend: {pdf_backend}. Must be one of {sorted(allowed_backends)}\"\
+          \ = True\n\n    allowed_backends = {e.value for e in PdfBackend}\n    if\
+          \ pdf_backend not in allowed_backends:\n        raise ValueError(\n    \
+          \        f\"Invalid pdf_backend: {pdf_backend}. Must be one of {sorted(allowed_backends)}\"\
           \n        )\n\n    backend_to_impl = {\n        PdfBackend.PYPDFIUM2.value:\
           \ (\n            \"docling.backend.pypdfium2_backend\",\n            \"\
           PyPdfiumDocumentBackend\",\n        ),\n        PdfBackend.DLPARSE_V1.value:\
@@ -161,20 +160,16 @@ deploymentSpec:
           \ (\n            \"docling.backend.docling_parse_v2_backend\",\n       \
           \     \"DoclingParseV2DocumentBackend\",\n        ),\n        PdfBackend.DLPARSE_V4.value:\
           \ (\n            \"docling.backend.docling_parse_v4_backend\",\n       \
-          \     \"DoclingParseV4DocumentBackend\",\n        ),\n    }\n\n    module_name,\
-          \ class_name = backend_to_impl[pdf_backend]\n\n    backend_class = getattr(import_module(module_name),\
+          \     \"DoclingParseV4DocumentBackend\",\n        ),\n    }\n    module_name,\
+          \ class_name = backend_to_impl[pdf_backend]\n    backend_class = getattr(import_module(module_name),\
           \ class_name)\n\n    doc_converter = DocumentConverter(\n        format_options={\n\
           \            InputFormat.PDF: PdfFormatOption(\n                pipeline_options=pipeline_options,\n\
           \                backend=backend_class,\n            )\n        }\n    )\n\
-          \n    conv_results = doc_converter.convert_all(\n        input_pdfs,\n \
-          \       raises_on_error=True,\n    )\n\n    for conv_res in conv_results:\n\
-          \        # TODO: handle errors, record success/failure somewhere - via\n\
-          \        # calling some API, writing to some shared storage, or\n      \
-          \  # something else that each parallel task can do independently\n     \
-          \   doc_filename = conv_res.input.file.stem\n        output_json_path =\
-          \ pathlib.Path(output_path) / f\"{doc_filename}.json\"\n        conv_res.document.save_as_json(\n\
-          \            output_json_path,\n            image_mode=ImageRefMode.PLACEHOLDER,\n\
-          \        )\n\n"
+          \n    conv_results = doc_converter.convert_all(input_pdfs, raises_on_error=True)\n\
+          \    for conv_res in conv_results:\n        doc_filename = conv_res.input.file.stem\n\
+          \        output_json_path = output_dir_p / f\"{doc_filename}.json\"\n  \
+          \      conv_res.document.save_as_json(output_json_path, image_mode=ImageRefMode.PLACEHOLDER)\n\
+          \n"
         image: quay.io/fabianofranz/docling:v2.43.0
     exec-import-test-pdfs:
       container:
@@ -188,10 +183,10 @@ deploymentSpec:
         - -c
         - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
           \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
-          \ python3 -m pip install --quiet --no-warn-script-location 'gitpython' \
-          \ &&  python3 -m pip install --quiet --no-warn-script-location 'kfp==2.14.2'\
-          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
-          $0\" \"$@\"\n"
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.13.0'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"'  &&\
+          \  python3 -m pip install --quiet --no-warn-script-location 'gitpython'\
+          \ && \"$0\" \"$@\"\n"
         - sh
         - -ec
         - 'program_path=$(mktemp -d)
@@ -204,14 +199,12 @@ deploymentSpec:
           '
         - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
           \ *\n\ndef import_test_pdfs(\n    output_path: dsl.Output[dsl.Artifact],\n\
-          ):\n    import os\n    import shutil\n    from git import Repo\n\n    docling_github_repo\
-          \ = \"https://github.com/docling-project/docling/\"\n    full_repo_path\
-          \ = os.path.join(output_path.path, \"docling\")\n    Repo.clone_from(docling_github_repo,\
-          \ full_repo_path, branch=\"v2.43.0\")\n\n    # Copy some tests pdf up to\
-          \ the root of our output folder\n    pdfs_path = os.path.join(full_repo_path,\
-          \ \"tests\", \"data\", \"pdf\")\n    shutil.copytree(pdfs_path, output_path.path,\
-          \ dirs_exist_ok=True)\n\n    # Delete the rest of the docling repo, leaving\
-          \ only the PDFs\n    shutil.rmtree(full_repo_path)\n\n"
+          ):\n    import os\n    import shutil\n    from git import Repo\n\n    output_dir\
+          \ = output_path.path\n\n    docling_github_repo = \"https://github.com/docling-project/docling/\"\
+          \n    full_repo_path = os.path.join(output_dir, \"docling\")\n    Repo.clone_from(docling_github_repo,\
+          \ full_repo_path, branch=\"v2.43.0\")\n\n    pdfs_path = os.path.join(full_repo_path,\
+          \ \"tests\", \"data\", \"pdf\")\n    shutil.copytree(pdfs_path, output_dir,\
+          \ dirs_exist_ok=True)\n\n    shutil.rmtree(full_repo_path)\n\n"
         image: python:3.11
 pipelineInfo:
   name: convert-pipeline
@@ -279,4 +272,4 @@ root:
         isOptional: true
         parameterType: STRING
 schemaVersion: 2.1.0
-sdkVersion: kfp-2.14.2
+sdkVersion: kfp-2.13.0

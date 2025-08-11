@@ -17,15 +17,15 @@ def import_test_pdfs(
     import shutil
     from git import Repo
 
+    output_dir = output_path.path
+
     docling_github_repo = "https://github.com/docling-project/docling/"
-    full_repo_path = os.path.join(output_path.path, "docling")
+    full_repo_path = os.path.join(output_dir, "docling")
     Repo.clone_from(docling_github_repo, full_repo_path, branch="v2.43.0")
 
-    # Copy some tests pdf up to the root of our output folder
     pdfs_path = os.path.join(full_repo_path, "tests", "data", "pdf")
-    shutil.copytree(pdfs_path, output_path.path, dirs_exist_ok=True)
+    shutil.copytree(pdfs_path, output_dir, dirs_exist_ok=True)
 
-    # Delete the rest of the docling repo, leaving only the PDFs
     shutil.rmtree(full_repo_path)
 
 @dsl.component(
@@ -37,13 +37,9 @@ def create_pdf_splits(
 ) -> List[List[str]]:
     import pathlib
 
-    # Split our entire directory of pdfs into n batches, where n == num_splits
     all_pdfs = [path.name for path in pathlib.Path(input_path.path).glob("*.pdf")]
-    splits = [all_pdfs[i::num_splits] for i in range(num_splits)]
-    return splits
+    return [all_pdfs[i::num_splits] for i in range(num_splits)]
 
-# A Docling container built from
-# https://github.com/docling-project/docling/blob/v2.43.0/Dockerfile
 @dsl.component(
     base_image="quay.io/fabianofranz/docling:v2.43.0",
 )
@@ -58,20 +54,21 @@ def docling_convert(
     from importlib import import_module
 
     from docling_core.types.doc.base import ImageRefMode
-    from docling.datamodel.base_models import ConversionStatus, InputFormat
+    from docling.datamodel.base_models import InputFormat
     from docling.datamodel.pipeline_options import PdfPipelineOptions, PdfBackend
     from docling.document_converter import DocumentConverter, PdfFormatOption
 
-    input_path = pathlib.Path(input_path.path)
-    output_path = pathlib.Path(output_path.path)
-    output_path.mkdir(parents=True, exist_ok=True)
+    os.environ["DOCLING_ARTIFACTS_PATH"] = "/opt/app-root/src/.cache/docling/models"
 
-    input_pdfs = [input_path / name for name in pdf_split]
+    input_dir_p = pathlib.Path(input_path.path)
+    output_dir_p = pathlib.Path(output_path.path)
+    output_dir_p.mkdir(parents=True, exist_ok=True)
+
+    input_pdfs = [input_dir_p / name for name in pdf_split]
 
     pipeline_options = PdfPipelineOptions()
     pipeline_options.generate_page_images = True
 
-    # Validate and resolve backend class from provided string using PdfBackend enum
     allowed_backends = {e.value for e in PdfBackend}
     if pdf_backend not in allowed_backends:
         raise ValueError(
@@ -96,9 +93,8 @@ def docling_convert(
             "DoclingParseV4DocumentBackend",
         ),
     }
-
+    
     module_name, class_name = backend_to_impl[pdf_backend]
-
     backend_class = getattr(import_module(module_name), class_name)
 
     doc_converter = DocumentConverter(
@@ -110,21 +106,11 @@ def docling_convert(
         }
     )
 
-    conv_results = doc_converter.convert_all(
-        input_pdfs,
-        raises_on_error=True,
-    )
-
+    conv_results = doc_converter.convert_all(input_pdfs, raises_on_error=True)
     for conv_res in conv_results:
-        # TODO: handle errors, record success/failure somewhere - via
-        # calling some API, writing to some shared storage, or
-        # something else that each parallel task can do independently
         doc_filename = conv_res.input.file.stem
-        output_json_path = pathlib.Path(output_path) / f"{doc_filename}.json"
-        conv_res.document.save_as_json(
-            output_json_path,
-            image_mode=ImageRefMode.PLACEHOLDER,
-        )
+        output_json_path = output_dir_p / f"{doc_filename}.json"
+        conv_res.document.save_as_json(output_json_path, image_mode=ImageRefMode.PLACEHOLDER)
 
 @dsl.pipeline()
 def convert_pipeline(num_splits: int = 3, pdf_backend: str = "dlparse_v4"):
