@@ -23,6 +23,10 @@ components:
     executorLabel: exec-docling-convert
     inputDefinitions:
       artifacts:
+        artifacts_path:
+          artifactType:
+            schemaTitle: system.Artifact
+            schemaVersion: 0.0.1
         input_path:
           artifactType:
             schemaTitle: system.Artifact
@@ -32,6 +36,14 @@ components:
           parameterType: STRING
         pdf_split:
           parameterType: LIST
+    outputDefinitions:
+      artifacts:
+        output_path:
+          artifactType:
+            schemaTitle: system.Artifact
+            schemaVersion: 0.0.1
+  comp-download-docling-models:
+    executorLabel: exec-download-docling-models
     outputDefinitions:
       artifacts:
         output_path:
@@ -48,6 +60,8 @@ components:
             name: comp-docling-convert
           inputs:
             artifacts:
+              artifacts_path:
+                componentInputArtifact: pipelinechannel--download-docling-models-output_path
               input_path:
                 componentInputArtifact: pipelinechannel--import-test-pdfs-output_path
             parameters:
@@ -59,6 +73,10 @@ components:
             name: docling-convert
     inputDefinitions:
       artifacts:
+        pipelinechannel--download-docling-models-output_path:
+          artifactType:
+            schemaTitle: system.Artifact
+            schemaVersion: 0.0.1
         pipelinechannel--import-test-pdfs-output_path:
           artifactType:
             schemaTitle: system.Artifact
@@ -107,10 +125,10 @@ deploymentSpec:
           '
         - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
           \ *\n\ndef create_pdf_splits(\n    input_path: dsl.Input[dsl.Artifact],\n\
-          \    num_splits: int,\n) -> List[List[str]]:\n    import pathlib\n\n   \
-          \ all_pdfs = [path.name for path in pathlib.Path(input_path.path).glob(\"\
-          *.pdf\")]\n    return [all_pdfs[i::num_splits] for i in range(num_splits)]\n\
-          \n"
+          \    num_splits: int,\n) -> List[List[str]]:\n    from pathlib import Path\n\
+          \n    input_path_p = Path(input_path.path)\n\n    all_pdfs = [path.name\
+          \ for path in input_path_p.glob(\"*.pdf\")]\n    return [all_pdfs[i::num_splits]\
+          \ for i in range(num_splits)]\n\n"
         image: python:3.11
     exec-docling-convert:
       container:
@@ -139,37 +157,80 @@ deploymentSpec:
           '
         - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
           \ *\n\ndef docling_convert(\n    input_path: dsl.Input[dsl.Artifact],\n\
-          \    pdf_split: List[str],\n    pdf_backend: str,\n    output_path: dsl.Output[dsl.Artifact],\n\
-          ):\n    import pathlib\n    import os\n    from importlib import import_module\n\
-          \n    from docling_core.types.doc.base import ImageRefMode\n    from docling.datamodel.base_models\
-          \ import InputFormat\n    from docling.datamodel.pipeline_options import\
-          \ PdfPipelineOptions, PdfBackend\n    from docling.document_converter import\
-          \ DocumentConverter, PdfFormatOption\n\n    os.environ[\"DOCLING_ARTIFACTS_PATH\"\
-          ] = \"/opt/app-root/src/.cache/docling/models\"\n\n    input_dir_p = pathlib.Path(input_path.path)\n\
-          \    output_dir_p = pathlib.Path(output_path.path)\n    output_dir_p.mkdir(parents=True,\
-          \ exist_ok=True)\n\n    input_pdfs = [input_dir_p / name for name in pdf_split]\n\
-          \n    pipeline_options = PdfPipelineOptions()\n    pipeline_options.generate_page_images\
-          \ = True\n\n    allowed_backends = {e.value for e in PdfBackend}\n    if\
-          \ pdf_backend not in allowed_backends:\n        raise ValueError(\n    \
-          \        f\"Invalid pdf_backend: {pdf_backend}. Must be one of {sorted(allowed_backends)}\"\
-          \n        )\n\n    backend_to_impl = {\n        PdfBackend.PYPDFIUM2.value:\
-          \ (\n            \"docling.backend.pypdfium2_backend\",\n            \"\
-          PyPdfiumDocumentBackend\",\n        ),\n        PdfBackend.DLPARSE_V1.value:\
+          \    pdf_split: List[str],\n    pdf_backend: str,\n    artifacts_path: dsl.Input[dsl.Artifact],\n\
+          \    output_path: dsl.Output[dsl.Artifact],\n):\n    from importlib import\
+          \ import_module\n    from pathlib import Path\n\n    from docling_core.types.doc.base\
+          \ import ImageRefMode\n    from docling.datamodel.base_models import InputFormat\n\
+          \    from docling.datamodel.pipeline_options import PdfPipelineOptions,\
+          \ PdfBackend, TableFormerMode\n    from docling.document_converter import\
+          \ DocumentConverter, PdfFormatOption\n\n    input_path_p = Path(input_path.path)\n\
+          \    artifacts_path_p = Path(artifacts_path.path)\n    output_path_p = Path(output_path.path)\n\
+          \    output_path_p.mkdir(parents=True, exist_ok=True)\n\n    input_pdfs\
+          \ = [input_path_p / name for name in pdf_split]\n    print(f\"docling-convert:\
+          \ starting with backend='{pdf_backend}', files={len(input_pdfs)}\", flush=True)\n\
+          \n\n    pipeline_options = PdfPipelineOptions()\n    pipeline_options.artifacts_path=artifacts_path_p\n\
+          \    pipeline_options.do_ocr = True\n    pipeline_options.do_table_structure\
+          \ = True\n    pipeline_options.table_structure_options.do_cell_matching\
+          \ = True\n    pipeline_options.table_structure_options.mode = TableFormerMode.ACCURATE\n\
+          \    pipeline_options.generate_page_images = True\n\n    allowed_backends\
+          \ = {e.value for e in PdfBackend}\n    if pdf_backend not in allowed_backends:\n\
+          \        raise ValueError(\n            f\"Invalid pdf_backend: {pdf_backend}.\
+          \ Must be one of {sorted(allowed_backends)}\"\n        )\n\n    backend_to_impl\
+          \ = {\n        PdfBackend.PYPDFIUM2.value: (\n            \"docling.backend.pypdfium2_backend\"\
+          ,\n            \"PyPdfiumDocumentBackend\",\n        ),\n        PdfBackend.DLPARSE_V1.value:\
           \ (\n            \"docling.backend.docling_parse_backend\",\n          \
           \  \"DoclingParseDocumentBackend\",\n        ),\n        PdfBackend.DLPARSE_V2.value:\
           \ (\n            \"docling.backend.docling_parse_v2_backend\",\n       \
           \     \"DoclingParseV2DocumentBackend\",\n        ),\n        PdfBackend.DLPARSE_V4.value:\
           \ (\n            \"docling.backend.docling_parse_v4_backend\",\n       \
-          \     \"DoclingParseV4DocumentBackend\",\n        ),\n    }\n    module_name,\
+          \     \"DoclingParseV4DocumentBackend\",\n        ),\n    }\n\n    module_name,\
           \ class_name = backend_to_impl[pdf_backend]\n    backend_class = getattr(import_module(module_name),\
           \ class_name)\n\n    doc_converter = DocumentConverter(\n        format_options={\n\
           \            InputFormat.PDF: PdfFormatOption(\n                pipeline_options=pipeline_options,\n\
           \                backend=backend_class,\n            )\n        }\n    )\n\
-          \n    conv_results = doc_converter.convert_all(input_pdfs, raises_on_error=True)\n\
-          \    for conv_res in conv_results:\n        doc_filename = conv_res.input.file.stem\n\
-          \        output_json_path = output_dir_p / f\"{doc_filename}.json\"\n  \
-          \      conv_res.document.save_as_json(output_json_path, image_mode=ImageRefMode.PLACEHOLDER)\n\
-          \n"
+          \n    results = doc_converter.convert_all(input_pdfs, raises_on_error=True)\n\
+          \n    for result in results:\n        doc_filename = result.input.file.stem\n\
+          \n        output_json_path = output_path_p / f\"{doc_filename}.json\"\n\
+          \        print(f\"docling-convert: saving {output_json_path}\", flush=True)\n\
+          \        result.document.save_as_json(\n            output_json_path, image_mode=ImageRefMode.PLACEHOLDER\n\
+          \        )\n\n        output_md_path = output_path_p / f\"{doc_filename}.md\"\
+          \n        print(f\"docling-convert: saving {output_md_path}\", flush=True)\n\
+          \        result.document.save_as_markdown(\n            output_md_path,\
+          \ image_mode=ImageRefMode.PLACEHOLDER\n        )\n\n    print(\"docling-convert:\
+          \ done\", flush=True)\n\n"
+        image: quay.io/fabianofranz/docling:v2.43.0
+    exec-download-docling-models:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - download_docling_models
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.13.0'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
+          $0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef download_docling_models(\n    output_path: dsl.Output[dsl.Artifact],\n\
+          ):\n    from pathlib import Path\n    from docling.utils.model_downloader\
+          \ import download_models\n\n    output_path_p = Path(output_path.path)\n\
+          \n    output_path_p.mkdir(parents=True, exist_ok=True)\n\n    download_models(\n\
+          \        output_dir=output_path_p,\n        progress=True,\n        with_layout=True,\n\
+          \        with_tableformer=True,\n        with_easyocr=True,\n    )\n\n"
         image: quay.io/fabianofranz/docling:v2.43.0
     exec-import-test-pdfs:
       container:
@@ -199,11 +260,12 @@ deploymentSpec:
           '
         - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
           \ *\n\ndef import_test_pdfs(\n    output_path: dsl.Output[dsl.Artifact],\n\
-          ):\n    import os\n    import shutil\n    from git import Repo\n\n    output_dir\
-          \ = output_path.path\n\n    docling_github_repo = \"https://github.com/docling-project/docling/\"\
-          \n    full_repo_path = os.path.join(output_dir, \"docling\")\n    Repo.clone_from(docling_github_repo,\
-          \ full_repo_path, branch=\"v2.43.0\")\n\n    pdfs_path = os.path.join(full_repo_path,\
-          \ \"tests\", \"data\", \"pdf\")\n    shutil.copytree(pdfs_path, output_dir,\
+          ):\n    from pathlib import Path\n    import shutil\n    from git import\
+          \ Repo\n\n    output_path_p = Path(output_path.path)\n\n    docling_github_repo\
+          \ = \"https://github.com/docling-project/docling/\"\n    full_repo_path\
+          \ = output_path_p / \"docling\"\n    Repo.clone_from(docling_github_repo,\
+          \ full_repo_path, branch=\"v2.43.0\")\n\n    pdfs_path = full_repo_path\
+          \ / \"tests\" / \"data\" / \"pdf\"\n    shutil.copytree(pdfs_path, output_path_p,\
           \ dirs_exist_ok=True)\n\n    shutil.rmtree(full_repo_path)\n\n"
         image: python:3.11
 pipelineInfo:
@@ -229,14 +291,26 @@ root:
               componentInputParameter: num_splits
         taskInfo:
           name: create-pdf-splits
+      download-docling-models:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-download-docling-models
+        taskInfo:
+          name: download-docling-models
       for-loop-1:
         componentRef:
           name: comp-for-loop-1
         dependentTasks:
         - create-pdf-splits
+        - download-docling-models
         - import-test-pdfs
         inputs:
           artifacts:
+            pipelinechannel--download-docling-models-output_path:
+              taskOutputArtifact:
+                outputArtifactKey: output_path
+                producerTask: download-docling-models
             pipelinechannel--import-test-pdfs-output_path:
               taskOutputArtifact:
                 outputArtifactKey: output_path

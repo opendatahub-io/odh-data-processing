@@ -6,6 +6,7 @@ from docling_convert_pipeline import (
     import_test_pdfs,
     create_pdf_splits,
     docling_convert,
+    download_docling_models,
 )
 
 
@@ -23,22 +24,23 @@ def convert_pipeline_local(num_splits: int = 1, pdf_backend: str = "dlparse_v4")
         num_splits=num_splits,
     )
 
+    artifacts = download_docling_models()
+
     first_split = take_first_split(splits=pdf_splits.output)
 
     docling_convert(
         input_path=importer.outputs["output_path"],
         pdf_split=first_split.output,
         pdf_backend=pdf_backend,
+        artifacts_path=artifacts.outputs["output_path"],
     )
 
 
 def main() -> None:
-    # Requires: pip install docker; docker login quay.io; and a Docker-compatible daemon (Docker or Podman socket)
+    # Requires: pip install docker; and a Docker-compatible daemon (Docker or Podman socket)
     local.init(runner=local.DockerRunner())
     convert_pipeline_local(num_splits=1, pdf_backend="dlparse_v4")
 
 
 if __name__ == "__main__":
     main()
-
-
