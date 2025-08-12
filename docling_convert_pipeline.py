@@ -77,6 +77,7 @@ def docling_convert(
     artifacts_path: dsl.Input[dsl.Artifact],
     output_path: dsl.Output[dsl.Artifact],
 ):
+    import os
     from importlib import import_module
     from pathlib import Path
 
@@ -88,6 +89,12 @@ def docling_convert(
         TableFormerMode,
     )
     from docling.document_converter import DocumentConverter, PdfFormatOption
+
+    allowed_backends = {e.value for e in PdfBackend}
+    if pdf_backend not in allowed_backends:
+        raise ValueError(
+            f"Invalid pdf_backend: {pdf_backend}. Must be one of {sorted(allowed_backends)}"
+        )
 
     input_path_p = Path(input_path.path)
     artifacts_path_p = Path(artifacts_path.path)
@@ -104,12 +111,6 @@ def docling_convert(
     pipeline_options.table_structure_options.do_cell_matching = True
     pipeline_options.table_structure_options.mode = TableFormerMode.ACCURATE
     pipeline_options.generate_page_images = True
-
-    allowed_backends = {e.value for e in PdfBackend}
-    if pdf_backend not in allowed_backends:
-        raise ValueError(
-            f"Invalid pdf_backend: {pdf_backend}. Must be one of {sorted(allowed_backends)}"
-        )
 
     backend_to_impl = {
         PdfBackend.PYPDFIUM2.value: (
@@ -141,6 +142,10 @@ def docling_convert(
             )
         }
     )
+
+    easyocr_path_p = artifacts_path_p / "EasyOcr"
+    os.environ["MODULE_PATH"] = str(easyocr_path_p)
+    os.environ["EASYOCR_MODULE_PATH"] = str(easyocr_path_p)
 
     results = doc_converter.convert_all(input_pdfs, raises_on_error=True)
 

@@ -158,24 +158,25 @@ deploymentSpec:
         - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
           \ *\n\ndef docling_convert(\n    input_path: dsl.Input[dsl.Artifact],\n\
           \    pdf_split: List[str],\n    pdf_backend: str,\n    artifacts_path: dsl.Input[dsl.Artifact],\n\
-          \    output_path: dsl.Output[dsl.Artifact],\n):\n    from importlib import\
-          \ import_module\n    from pathlib import Path\n\n    from docling_core.types.doc.base\
-          \ import ImageRefMode\n    from docling.datamodel.base_models import InputFormat\n\
-          \    from docling.datamodel.pipeline_options import PdfPipelineOptions,\
-          \ PdfBackend, TableFormerMode\n    from docling.document_converter import\
-          \ DocumentConverter, PdfFormatOption\n\n    input_path_p = Path(input_path.path)\n\
-          \    artifacts_path_p = Path(artifacts_path.path)\n    output_path_p = Path(output_path.path)\n\
+          \    output_path: dsl.Output[dsl.Artifact],\n):\n    import os\n    from\
+          \ importlib import import_module\n    from pathlib import Path\n\n    from\
+          \ docling_core.types.doc.base import ImageRefMode\n    from docling.datamodel.base_models\
+          \ import InputFormat\n    from docling.datamodel.pipeline_options import\
+          \ (\n        PdfPipelineOptions,\n        PdfBackend,\n        TableFormerMode,\n\
+          \    )\n    from docling.document_converter import DocumentConverter, PdfFormatOption\n\
+          \n    allowed_backends = {e.value for e in PdfBackend}\n    if pdf_backend\
+          \ not in allowed_backends:\n        raise ValueError(\n            f\"Invalid\
+          \ pdf_backend: {pdf_backend}. Must be one of {sorted(allowed_backends)}\"\
+          \n        )\n\n    input_path_p = Path(input_path.path)\n    artifacts_path_p\
+          \ = Path(artifacts_path.path)\n    output_path_p = Path(output_path.path)\n\
           \    output_path_p.mkdir(parents=True, exist_ok=True)\n\n    input_pdfs\
           \ = [input_path_p / name for name in pdf_split]\n    print(f\"docling-convert:\
           \ starting with backend='{pdf_backend}', files={len(input_pdfs)}\", flush=True)\n\
-          \n\n    pipeline_options = PdfPipelineOptions()\n    pipeline_options.artifacts_path=artifacts_path_p\n\
-          \    pipeline_options.do_ocr = True\n    pipeline_options.do_table_structure\
+          \n    pipeline_options = PdfPipelineOptions()\n    pipeline_options.artifacts_path\
+          \ = artifacts_path_p\n    pipeline_options.do_ocr = True\n    pipeline_options.do_table_structure\
           \ = True\n    pipeline_options.table_structure_options.do_cell_matching\
           \ = True\n    pipeline_options.table_structure_options.mode = TableFormerMode.ACCURATE\n\
-          \    pipeline_options.generate_page_images = True\n\n    allowed_backends\
-          \ = {e.value for e in PdfBackend}\n    if pdf_backend not in allowed_backends:\n\
-          \        raise ValueError(\n            f\"Invalid pdf_backend: {pdf_backend}.\
-          \ Must be one of {sorted(allowed_backends)}\"\n        )\n\n    backend_to_impl\
+          \    pipeline_options.generate_page_images = True\n\n    backend_to_impl\
           \ = {\n        PdfBackend.PYPDFIUM2.value: (\n            \"docling.backend.pypdfium2_backend\"\
           ,\n            \"PyPdfiumDocumentBackend\",\n        ),\n        PdfBackend.DLPARSE_V1.value:\
           \ (\n            \"docling.backend.docling_parse_backend\",\n          \
@@ -188,16 +189,17 @@ deploymentSpec:
           \ class_name)\n\n    doc_converter = DocumentConverter(\n        format_options={\n\
           \            InputFormat.PDF: PdfFormatOption(\n                pipeline_options=pipeline_options,\n\
           \                backend=backend_class,\n            )\n        }\n    )\n\
-          \n    results = doc_converter.convert_all(input_pdfs, raises_on_error=True)\n\
-          \n    for result in results:\n        doc_filename = result.input.file.stem\n\
-          \n        output_json_path = output_path_p / f\"{doc_filename}.json\"\n\
-          \        print(f\"docling-convert: saving {output_json_path}\", flush=True)\n\
-          \        result.document.save_as_json(\n            output_json_path, image_mode=ImageRefMode.PLACEHOLDER\n\
-          \        )\n\n        output_md_path = output_path_p / f\"{doc_filename}.md\"\
-          \n        print(f\"docling-convert: saving {output_md_path}\", flush=True)\n\
-          \        result.document.save_as_markdown(\n            output_md_path,\
-          \ image_mode=ImageRefMode.PLACEHOLDER\n        )\n\n    print(\"docling-convert:\
-          \ done\", flush=True)\n\n"
+          \n    easyocr_path_p = artifacts_path_p / \"EasyOcr\"\n    os.environ[\"\
+          MODULE_PATH\"] = str(easyocr_path_p)\n    os.environ[\"EASYOCR_MODULE_PATH\"\
+          ] = str(easyocr_path_p)\n\n    results = doc_converter.convert_all(input_pdfs,\
+          \ raises_on_error=True)\n\n    for result in results:\n        doc_filename\
+          \ = result.input.file.stem\n\n        output_json_path = output_path_p /\
+          \ f\"{doc_filename}.json\"\n        print(f\"docling-convert: saving {output_json_path}\"\
+          , flush=True)\n        result.document.save_as_json(output_json_path, image_mode=ImageRefMode.PLACEHOLDER)\n\
+          \n        output_md_path = output_path_p / f\"{doc_filename}.md\"\n    \
+          \    print(f\"docling-convert: saving {output_md_path}\", flush=True)\n\
+          \        result.document.save_as_markdown(output_md_path, image_mode=ImageRefMode.PLACEHOLDER)\n\
+          \n    print(\"docling-convert: done\", flush=True)\n\n"
         image: quay.io/fabianofranz/docling:v2.43.0
     exec-download-docling-models:
       container:
