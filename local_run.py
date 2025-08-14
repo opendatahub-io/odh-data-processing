@@ -2,7 +2,7 @@ from typing import List
 
 from kfp import dsl, local
 
-from docling_convert_pipeline import (
+from docling_convert_components import (
     import_test_pdfs,
     create_pdf_splits,
     docling_convert,

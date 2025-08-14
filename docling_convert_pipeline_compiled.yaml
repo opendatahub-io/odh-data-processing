@@ -1,5 +1,6 @@
 # PIPELINE DEFINITION
-# Name: convert-pipeline
+# Name: data-processing-docling-pipeline
+# Description: Docling convert pipeline by the Data Processing Team
 # Inputs:
 #    num_splits: int [Default: 3.0]
 #    pdf_backend: str [Default: 'dlparse_v4']
@@ -12,8 +13,10 @@ components:
           artifactType:
             schemaTitle: system.Artifact
             schemaVersion: 0.0.1
+          description: Path to the input directory containing PDF files.
       parameters:
         num_splits:
+          description: Number of splits to create.
           parameterType: NUMBER_INTEGER
     outputDefinitions:
       parameters:
@@ -27,14 +30,18 @@ components:
           artifactType:
             schemaTitle: system.Artifact
             schemaVersion: 0.0.1
+          description: Path to the directory containing Docling models.
         input_path:
           artifactType:
             schemaTitle: system.Artifact
             schemaVersion: 0.0.1
+          description: Path to the input directory containing PDF files.
       parameters:
         pdf_backend:
+          description: Backend to use for PDF processing.
           parameterType: STRING
         pdf_split:
+          description: List of PDF file names to process.
           parameterType: LIST
     outputDefinitions:
       artifacts:
@@ -110,7 +117,7 @@ deploymentSpec:
         - -c
         - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
           \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
-          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.13.0'\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.14.2'\
           \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
           $0\" \"$@\"\n"
         - sh
@@ -125,10 +132,12 @@ deploymentSpec:
           '
         - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
           \ *\n\ndef create_pdf_splits(\n    input_path: dsl.Input[dsl.Artifact],\n\
-          \    num_splits: int,\n) -> List[List[str]]:\n    from pathlib import Path\n\
-          \n    input_path_p = Path(input_path.path)\n\n    all_pdfs = [path.name\
-          \ for path in input_path_p.glob(\"*.pdf\")]\n    return [all_pdfs[i::num_splits]\
-          \ for i in range(num_splits)]\n\n"
+          \    num_splits: int,\n) -> List[List[str]]:\n    \"\"\"\n    Create a list\
+          \ of PDF splits.\n\n    Args:\n        input_path: Path to the input directory\
+          \ containing PDF files.\n        num_splits: Number of splits to create.\n\
+          \    \"\"\"\n    from pathlib import Path\n\n    input_path_p = Path(input_path.path)\n\
+          \n    all_pdfs = [path.name for path in input_path_p.glob(\"*.pdf\")]\n\
+          \    return [all_pdfs[i::num_splits] for i in range(num_splits)]\n\n"
         image: python:3.11
     exec-docling-convert:
       container:
@@ -142,7 +151,7 @@ deploymentSpec:
         - -c
         - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
           \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
-          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.13.0'\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.14.2'\
           \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
           $0\" \"$@\"\n"
         - sh
@@ -158,15 +167,24 @@ deploymentSpec:
         - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
           \ *\n\ndef docling_convert(\n    input_path: dsl.Input[dsl.Artifact],\n\
           \    pdf_split: List[str],\n    pdf_backend: str,\n    artifacts_path: dsl.Input[dsl.Artifact],\n\
-          \    output_path: dsl.Output[dsl.Artifact],\n):\n    import os\n    from\
-          \ importlib import import_module\n    from pathlib import Path\n\n    from\
-          \ docling_core.types.doc.base import ImageRefMode\n    from docling.datamodel.base_models\
-          \ import InputFormat\n    from docling.datamodel.pipeline_options import\
-          \ (\n        PdfPipelineOptions,\n        PdfBackend,\n        TableFormerMode,\n\
-          \    )\n    from docling.document_converter import DocumentConverter, PdfFormatOption\n\
-          \n    allowed_backends = {e.value for e in PdfBackend}\n    if pdf_backend\
-          \ not in allowed_backends:\n        raise ValueError(\n            f\"Invalid\
-          \ pdf_backend: {pdf_backend}. Must be one of {sorted(allowed_backends)}\"\
+          \    output_path: dsl.Output[dsl.Artifact],\n):\n    \"\"\"\n    Convert\
+          \ a list of PDF files to JSON and Markdown using Docling.\n\n    Args:\n\
+          \        input_path: Path to the input directory containing PDF files.\n\
+          \        pdf_split: List of PDF file names to process.\n        pdf_backend:\
+          \ Backend to use for PDF processing.\n        artifacts_path: Path to the\
+          \ directory containing Docling models.\n        output_path: Path to the\
+          \ output directory for JSON and Markdown files.\n    \"\"\"\n    import\
+          \ os\n    from importlib import import_module\n    from pathlib import Path\n\
+          \n    from docling_core.types.doc.base import ImageRefMode  # pylint: disable=import-outside-toplevel\
+          \  # noqa: PLC0415, E402\n    from docling.datamodel.base_models import\
+          \ InputFormat  # pylint: disable=import-outside-toplevel  # noqa: PLC0415,\
+          \ E402\n    from docling.datamodel.pipeline_options import (  # pylint:\
+          \ disable=import-outside-toplevel  # noqa: PLC0415, E402\n        PdfPipelineOptions,\n\
+          \        PdfBackend,\n        TableFormerMode,\n    )\n    from docling.document_converter\
+          \ import DocumentConverter, PdfFormatOption  # pylint: disable=import-outside-toplevel\
+          \  # noqa: PLC0415, E402\n\n    allowed_backends = {e.value for e in PdfBackend}\n\
+          \    if pdf_backend not in allowed_backends:\n        raise ValueError(\n\
+          \            f\"Invalid pdf_backend: {pdf_backend}. Must be one of {sorted(allowed_backends)}\"\
           \n        )\n\n    input_path_p = Path(input_path.path)\n    artifacts_path_p\
           \ = Path(artifacts_path.path)\n    output_path_p = Path(output_path.path)\n\
           \    output_path_p.mkdir(parents=True, exist_ok=True)\n\n    input_pdfs\
@@ -213,7 +231,7 @@ deploymentSpec:
         - -c
         - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
           \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
-          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.13.0'\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.14.2'\
           \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
           $0\" \"$@\"\n"
         - sh
@@ -228,11 +246,13 @@ deploymentSpec:
           '
         - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
           \ *\n\ndef download_docling_models(\n    output_path: dsl.Output[dsl.Artifact],\n\
-          ):\n    from pathlib import Path\n    from docling.utils.model_downloader\
-          \ import download_models\n\n    output_path_p = Path(output_path.path)\n\
-          \n    output_path_p.mkdir(parents=True, exist_ok=True)\n\n    download_models(\n\
-          \        output_dir=output_path_p,\n        progress=True,\n        with_layout=True,\n\
-          \        with_tableformer=True,\n        with_easyocr=True,\n    )\n\n"
+          ):\n    \"\"\"\n    Download Docling models.\n\n    Args:\n        output_path:\
+          \ Path to the output directory for Docling models.\n    \"\"\"\n    from\
+          \ pathlib import Path\n    from docling.utils.model_downloader import download_models\n\
+          \n    output_path_p = Path(output_path.path)\n\n    output_path_p.mkdir(parents=True,\
+          \ exist_ok=True)\n\n    download_models(\n        output_dir=output_path_p,\n\
+          \        progress=True,\n        with_layout=True,\n        with_tableformer=True,\n\
+          \        with_easyocr=True,\n    )\n\n"
         image: quay.io/fabianofranz/docling:v2.43.0
     exec-import-test-pdfs:
       container:
@@ -246,10 +266,10 @@ deploymentSpec:
         - -c
         - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
           \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
-          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.13.0'\
-          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"'  &&\
-          \  python3 -m pip install --quiet --no-warn-script-location 'gitpython'\
-          \ && \"$0\" \"$@\"\n"
+          \ python3 -m pip install --quiet --no-warn-script-location 'gitpython' \
+          \ &&  python3 -m pip install --quiet --no-warn-script-location 'kfp==2.14.2'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
+          $0\" \"$@\"\n"
         - sh
         - -ec
         - 'program_path=$(mktemp -d)
@@ -262,16 +282,20 @@ deploymentSpec:
           '
         - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
           \ *\n\ndef import_test_pdfs(\n    output_path: dsl.Output[dsl.Artifact],\n\
-          ):\n    from pathlib import Path\n    import shutil\n    from git import\
-          \ Repo\n\n    output_path_p = Path(output_path.path)\n\n    docling_github_repo\
-          \ = \"https://github.com/docling-project/docling/\"\n    full_repo_path\
-          \ = output_path_p / \"docling\"\n    Repo.clone_from(docling_github_repo,\
+          ):\n    \"\"\"\n    Import test PDF files from the Docling GitHub repository.\n\
+          \n    Args:\n        output_path: Path to the output directory for the PDF\
+          \ files.\n    \"\"\"\n    from pathlib import Path\n    import shutil\n\
+          \    from git import Repo  # pylint: disable=import-outside-toplevel  #\
+          \ noqa: PLC0415, E402\n\n    output_path_p = Path(output_path.path)\n\n\
+          \    docling_github_repo = \"https://github.com/docling-project/docling/\"\
+          \n    full_repo_path = output_path_p / \"docling\"\n    Repo.clone_from(docling_github_repo,\
           \ full_repo_path, branch=\"v2.43.0\")\n\n    pdfs_path = full_repo_path\
           \ / \"tests\" / \"data\" / \"pdf\"\n    shutil.copytree(pdfs_path, output_path_p,\
           \ dirs_exist_ok=True)\n\n    shutil.rmtree(full_repo_path)\n\n"
         image: python:3.11
 pipelineInfo:
-  name: convert-pipeline
+  description: Docling convert pipeline by the Data Processing Team
+  name: data-processing-docling-pipeline
 root:
   dag:
     tasks:
@@ -348,4 +372,4 @@ root:
         isOptional: true
         parameterType: STRING
 schemaVersion: 2.1.0
-sdkVersion: kfp-2.13.0
+sdkVersion: kfp-2.14.2
