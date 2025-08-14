@@ -7,32 +7,45 @@ PYTHON_BASE_IMAGE = "python:3.11"
 
 @dsl.component(
     base_image=PYTHON_BASE_IMAGE,
-    packages_to_install=["gitpython"],
+    packages_to_install=["requests"],
 )
-def import_test_pdfs(
+def import_pdfs(
+    pdf_base_url: str,
+    pdf_filenames: str,
     output_path: dsl.Output[dsl.Artifact],
 ):
     """
-    Import test PDF files from the Docling GitHub repository.
+    Import PDF filenames (comma-separated) from specified base URL.
 
     Args:
+        base_url: Base URL of the PDF files.
+        pdf_filenames: List of PDF filenames to import.
         output_path: Path to the output directory for the PDF files.
     """
     from pathlib import Path
-    import shutil
-    from git import Repo  # pylint: disable=import-outside-toplevel  # noqa: PLC0415, E402
+    import requests
 
     output_path_p = Path(output_path.path)
+    output_path_p.mkdir(parents=True, exist_ok=True)
 
-    docling_github_repo = "https://github.com/docling-project/docling/"
-    full_repo_path = output_path_p / "docling"
-    Repo.clone_from(docling_github_repo, full_repo_path, branch="v2.43.0")
+    if not pdf_base_url:
+        raise ValueError("base_url must be provided")
 
-    pdfs_path = full_repo_path / "tests" / "data" / "pdf"
-    shutil.copytree(pdfs_path, output_path_p, dirs_exist_ok=True)
+    filenames = [name.strip() for name in pdf_filenames.split(",") if name.strip()]
+    if not filenames:
+        raise ValueError("pdf_filenames must contain at least one filename (comma-separated)")
 
-    shutil.rmtree(full_repo_path)
-
+    for name in filenames:
+        url = f"{pdf_base_url.rstrip('/')}/{name.lstrip('/')}"
+        dest = output_path_p / name
+        print(f"import-test-pdfs: downloading {url} -> {dest}", flush=True)
+        with requests.get(url, stream=True, timeout=30) as resp:
+            resp.raise_for_status()
+            with dest.open("wb") as f:
+                for chunk in resp.iter_content(chunk_size=8192):
+                    if chunk:
+                        f.write(chunk)
+    print("import-test-pdfs: done", flush=True)
 
 @dsl.component(
     base_image=PYTHON_BASE_IMAGE,

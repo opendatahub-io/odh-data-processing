@@ -1,7 +1,7 @@
 from kfp import dsl, compiler
 
 from docling_convert_components import (
-    import_test_pdfs, 
+    import_pdfs, 
     create_pdf_splits, 
     download_docling_models, 
     docling_convert,
@@ -11,8 +11,17 @@ from docling_convert_components import (
     name= "data-processing-docling-pipeline",
     description= "Docling convert pipeline by the Data Processing Team",
 )
-def convert_pipeline(num_splits: int = 3, pdf_backend: str = "dlparse_v4"):
-    importer = import_test_pdfs()
+def convert_pipeline(
+    num_splits: int = 3, 
+    pdf_backend: str = "dlparse_v4",
+    pdf_base_url: str = "https://github.com/docling-project/docling/raw/v2.43.0/tests/data/pdf",
+    pdf_filenames: str = "2203.01017v2.pdf,2206.01062.pdf,2305.03393v1-pg9.pdf,2305.03393v1.pdf,amt_handbook_sample.pdf,code_and_formula.pdf,multi_page.pdf,redp5110_sampled.pdf",
+):
+
+    importer = import_pdfs(
+        pdf_base_url=pdf_base_url,
+        pdf_filenames=pdf_filenames,
+    )
 
     pdf_splits = create_pdf_splits(
         input_path=importer.outputs["output_path"],
@@ -22,12 +31,18 @@ def convert_pipeline(num_splits: int = 3, pdf_backend: str = "dlparse_v4"):
     artifacts = download_docling_models()
 
     with dsl.ParallelFor(pdf_splits.output) as pdf_split:
-        docling_convert(
+        converter = docling_convert(
             input_path=importer.outputs["output_path"],
             pdf_split=pdf_split,
             pdf_backend=pdf_backend,
             artifacts_path=artifacts.outputs["output_path"],
         )
+        
+        converter.set_caching_options(False)
+        converter.set_memory_request("1G")
+        converter.set_memory_limit("6G")
+        converter.set_cpu_request("500m")
+        converter.set_cpu_limit("4")
 
 
 if __name__ == "__main__":

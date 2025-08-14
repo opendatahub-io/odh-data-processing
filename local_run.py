@@ -3,7 +3,7 @@ from typing import List
 from kfp import dsl, local
 
 from docling_convert_components import (
-    import_test_pdfs,
+    import_pdfs,
     create_pdf_splits,
     docling_convert,
     download_docling_models,
@@ -17,7 +17,10 @@ def take_first_split(splits: List[List[str]]) -> List[str]:
 
 @dsl.pipeline()
 def convert_pipeline_local(num_splits: int = 1, pdf_backend: str = "dlparse_v4"):
-    importer = import_test_pdfs()
+    importer = import_pdfs(
+        base_url="https://github.com/docling-project/docling/raw/v2.43.0/tests/data/pdf",
+        pdf_filenames="2203.01017v2.pdf,2206.01062.pdf",
+    )
 
     pdf_splits = create_pdf_splits(
         input_path=importer.outputs["output_path"],

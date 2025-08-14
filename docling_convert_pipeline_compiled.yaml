@@ -4,6 +4,8 @@
 # Inputs:
 #    num_splits: int [Default: 3.0]
 #    pdf_backend: str [Default: 'dlparse_v4']
+#    pdf_base_url: str [Default: 'https://github.com/docling-project/docling/raw/v2.43.0/tests/data/pdf']
+#    pdf_filenames: str [Default: '2203.01017v2.pdf,2206.01062.pdf,2305.03393v1-pg9.pdf,2305.03393v1.pdf,amt_handbook_sample.pdf,code_and_formula.pdf,multi_page.pdf,redp5110_sampled.pdf']
 components:
   comp-create-pdf-splits:
     executorLabel: exec-create-pdf-splits
@@ -61,8 +63,7 @@ components:
     dag:
       tasks:
         docling-convert:
-          cachingOptions:
-            enableCache: true
+          cachingOptions: {}
           componentRef:
             name: comp-docling-convert
           inputs:
@@ -70,7 +71,7 @@ components:
               artifacts_path:
                 componentInputArtifact: pipelinechannel--download-docling-models-output_path
               input_path:
-                componentInputArtifact: pipelinechannel--import-test-pdfs-output_path
+                componentInputArtifact: pipelinechannel--import-pdfs-output_path
             parameters:
               pdf_backend:
                 componentInputParameter: pipelinechannel--pdf_backend
@@ -84,7 +85,7 @@ components:
           artifactType:
             schemaTitle: system.Artifact
             schemaVersion: 0.0.1
-        pipelinechannel--import-test-pdfs-output_path:
+        pipelinechannel--import-pdfs-output_path:
           artifactType:
             schemaTitle: system.Artifact
             schemaVersion: 0.0.1
@@ -95,8 +96,15 @@ components:
           parameterType: LIST
         pipelinechannel--pdf_backend:
           parameterType: STRING
-  comp-import-test-pdfs:
-    executorLabel: exec-import-test-pdfs
+  comp-import-pdfs:
+    executorLabel: exec-import-pdfs
+    inputDefinitions:
+      parameters:
+        pdf_base_url:
+          parameterType: STRING
+        pdf_filenames:
+          description: List of PDF filenames to import.
+          parameterType: STRING
     outputDefinitions:
       artifacts:
         output_path:
@@ -219,6 +227,15 @@ deploymentSpec:
           \        result.document.save_as_markdown(output_md_path, image_mode=ImageRefMode.PLACEHOLDER)\n\
           \n    print(\"docling-convert: done\", flush=True)\n\n"
         image: quay.io/fabianofranz/docling:v2.43.0
+        resources:
+          cpuLimit: 4.0
+          cpuRequest: 0.5
+          memoryLimit: 6.0
+          memoryRequest: 1.0
+          resourceCpuLimit: '4'
+          resourceCpuRequest: 500m
+          resourceMemoryLimit: 6G
+          resourceMemoryRequest: 1G
     exec-download-docling-models:
       container:
         args:
@@ -254,20 +271,20 @@ deploymentSpec:
           \        progress=True,\n        with_layout=True,\n        with_tableformer=True,\n\
           \        with_easyocr=True,\n    )\n\n"
         image: quay.io/fabianofranz/docling:v2.43.0
-    exec-import-test-pdfs:
+    exec-import-pdfs:
       container:
         args:
         - --executor_input
         - '{{$}}'
         - --function_to_execute
-        - import_test_pdfs
+        - import_pdfs
         command:
         - sh
         - -c
         - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
           \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
-          \ python3 -m pip install --quiet --no-warn-script-location 'gitpython' \
-          \ &&  python3 -m pip install --quiet --no-warn-script-location 'kfp==2.14.2'\
+          \ python3 -m pip install --quiet --no-warn-script-location 'requests'  &&\
+          \  python3 -m pip install --quiet --no-warn-script-location 'kfp==2.14.2'\
           \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
           $0\" \"$@\"\n"
         - sh
@@ -281,17 +298,25 @@ deploymentSpec:
 
           '
         - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
-          \ *\n\ndef import_test_pdfs(\n    output_path: dsl.Output[dsl.Artifact],\n\
-          ):\n    \"\"\"\n    Import test PDF files from the Docling GitHub repository.\n\
-          \n    Args:\n        output_path: Path to the output directory for the PDF\
-          \ files.\n    \"\"\"\n    from pathlib import Path\n    import shutil\n\
-          \    from git import Repo  # pylint: disable=import-outside-toplevel  #\
-          \ noqa: PLC0415, E402\n\n    output_path_p = Path(output_path.path)\n\n\
-          \    docling_github_repo = \"https://github.com/docling-project/docling/\"\
-          \n    full_repo_path = output_path_p / \"docling\"\n    Repo.clone_from(docling_github_repo,\
-          \ full_repo_path, branch=\"v2.43.0\")\n\n    pdfs_path = full_repo_path\
-          \ / \"tests\" / \"data\" / \"pdf\"\n    shutil.copytree(pdfs_path, output_path_p,\
-          \ dirs_exist_ok=True)\n\n    shutil.rmtree(full_repo_path)\n\n"
+          \ *\n\ndef import_pdfs(\n    pdf_base_url: str,\n    pdf_filenames: str,\n\
+          \    output_path: dsl.Output[dsl.Artifact],\n):\n    \"\"\"\n    Import\
+          \ PDF filenames (comma-separated) from specified base URL.\n\n    Args:\n\
+          \        base_url: Base URL of the PDF files.\n        pdf_filenames: List\
+          \ of PDF filenames to import.\n        output_path: Path to the output directory\
+          \ for the PDF files.\n    \"\"\"\n    from pathlib import Path\n    import\
+          \ requests\n\n    output_path_p = Path(output_path.path)\n    output_path_p.mkdir(parents=True,\
+          \ exist_ok=True)\n\n    if not pdf_base_url:\n        raise ValueError(\"\
+          base_url must be provided\")\n\n    filenames = [name.strip() for name in\
+          \ pdf_filenames.split(\",\") if name.strip()]\n    if not filenames:\n \
+          \       raise ValueError(\"pdf_filenames must contain at least one filename\
+          \ (comma-separated)\")\n\n    for name in filenames:\n        url = f\"\
+          {pdf_base_url.rstrip('/')}/{name.lstrip('/')}\"\n        dest = output_path_p\
+          \ / name\n        print(f\"import-test-pdfs: downloading {url} -> {dest}\"\
+          , flush=True)\n        with requests.get(url, stream=True, timeout=30) as\
+          \ resp:\n            resp.raise_for_status()\n            with dest.open(\"\
+          wb\") as f:\n                for chunk in resp.iter_content(chunk_size=8192):\n\
+          \                    if chunk:\n                        f.write(chunk)\n\
+          \    print(\"import-test-pdfs: done\", flush=True)\n\n"
         image: python:3.11
 pipelineInfo:
   description: Docling convert pipeline by the Data Processing Team
@@ -305,13 +330,13 @@ root:
         componentRef:
           name: comp-create-pdf-splits
         dependentTasks:
-        - import-test-pdfs
+        - import-pdfs
         inputs:
           artifacts:
             input_path:
               taskOutputArtifact:
                 outputArtifactKey: output_path
-                producerTask: import-test-pdfs
+                producerTask: import-pdfs
           parameters:
             num_splits:
               componentInputParameter: num_splits
@@ -330,17 +355,17 @@ root:
         dependentTasks:
         - create-pdf-splits
         - download-docling-models
-        - import-test-pdfs
+        - import-pdfs
         inputs:
           artifacts:
             pipelinechannel--download-docling-models-output_path:
               taskOutputArtifact:
                 outputArtifactKey: output_path
                 producerTask: download-docling-models
-            pipelinechannel--import-test-pdfs-output_path:
+            pipelinechannel--import-pdfs-output_path:
               taskOutputArtifact:
                 outputArtifactKey: output_path
-                producerTask: import-test-pdfs
+                producerTask: import-pdfs
           parameters:
             pipelinechannel--create-pdf-splits-Output:
               taskOutputParameter:
@@ -354,13 +379,19 @@ root:
             inputParameter: pipelinechannel--create-pdf-splits-Output
         taskInfo:
           name: for-loop-1
-      import-test-pdfs:
+      import-pdfs:
         cachingOptions:
           enableCache: true
         componentRef:
-          name: comp-import-test-pdfs
+          name: comp-import-pdfs
+        inputs:
+          parameters:
+            pdf_base_url:
+              componentInputParameter: pdf_base_url
+            pdf_filenames:
+              componentInputParameter: pdf_filenames
         taskInfo:
-          name: import-test-pdfs
+          name: import-pdfs
   inputDefinitions:
     parameters:
       num_splits:
@@ -369,6 +400,14 @@ root:
         parameterType: NUMBER_INTEGER
       pdf_backend:
         defaultValue: dlparse_v4
+        isOptional: true
+        parameterType: STRING
+      pdf_base_url:
+        defaultValue: https://github.com/docling-project/docling/raw/v2.43.0/tests/data/pdf
+        isOptional: true
+        parameterType: STRING
+      pdf_filenames:
+        defaultValue: 2203.01017v2.pdf,2206.01062.pdf,2305.03393v1-pg9.pdf,2305.03393v1.pdf,amt_handbook_sample.pdf,code_and_formula.pdf,multi_page.pdf,redp5110_sampled.pdf
         isOptional: true
         parameterType: STRING
 schemaVersion: 2.1.0
