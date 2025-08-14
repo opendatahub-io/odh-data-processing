@@ -102,10 +102,14 @@ def download_docling_models(
 )
 def docling_convert(
     input_path: dsl.Input[dsl.Artifact],
-    pdf_split: List[str],
-    pdf_backend: str,
     artifacts_path: dsl.Input[dsl.Artifact],
     output_path: dsl.Output[dsl.Artifact],
+    pdf_split: List[str],
+    pdf_backend: str = "dlparse_v4",
+    image_export_mode: str = "embedded",
+    table_mode: str = "accurate",
+    num_threads: int = 4,
+    timeout_per_document: int = 0,
 ):
     """
     Convert a list of PDF files to JSON and Markdown using Docling.
@@ -129,6 +133,7 @@ def docling_convert(
         TableFormerMode,
     )
     from docling.document_converter import DocumentConverter, PdfFormatOption  # pylint: disable=import-outside-toplevel  # noqa: PLC0415, E402
+    from docling.datamodel.accelerator_options import AcceleratorDevice, AcceleratorOptions  # pylint: disable=import-outside-toplevel  # noqa: PLC0415, E402
 
     allowed_backends = {e.value for e in PdfBackend}
     if pdf_backend not in allowed_backends:
@@ -149,8 +154,12 @@ def docling_convert(
     pipeline_options.do_ocr = True
     pipeline_options.do_table_structure = True
     pipeline_options.table_structure_options.do_cell_matching = True
-    pipeline_options.table_structure_options.mode = TableFormerMode.ACCURATE
     pipeline_options.generate_page_images = True
+    pipeline_options.table_structure_options.mode = TableFormerMode(table_mode)
+    pipeline_options.document_timeout = float(timeout_per_document)
+    pipeline_options.accelerator_options = AcceleratorOptions(
+        num_threads=num_threads, device=AcceleratorDevice.AUTO
+    )
 
     backend_to_impl = {
         PdfBackend.PYPDFIUM2.value: (
@@ -194,10 +203,10 @@ def docling_convert(
 
         output_json_path = output_path_p / f"{doc_filename}.json"
         print(f"docling-convert: saving {output_json_path}", flush=True)
-        result.document.save_as_json(output_json_path, image_mode=ImageRefMode.PLACEHOLDER)
+        result.document.save_as_json(output_json_path, image_mode=ImageRefMode(image_export_mode))
 
         output_md_path = output_path_p / f"{doc_filename}.md"
         print(f"docling-convert: saving {output_md_path}", flush=True)
-        result.document.save_as_markdown(output_md_path, image_mode=ImageRefMode.PLACEHOLDER)
+        result.document.save_as_markdown(output_md_path, image_mode=ImageRefMode(image_export_mode))
 
     print("docling-convert: done", flush=True)

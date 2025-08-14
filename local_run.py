@@ -18,7 +18,7 @@ def take_first_split(splits: List[List[str]]) -> List[str]:
 @dsl.pipeline()
 def convert_pipeline_local(num_splits: int = 1, pdf_backend: str = "dlparse_v4"):
     importer = import_pdfs(
-        base_url="https://github.com/docling-project/docling/raw/v2.43.0/tests/data/pdf",
+        pdf_base_url="https://github.com/docling-project/docling/raw/v2.43.0/tests/data/pdf",
         pdf_filenames="2203.01017v2.pdf,2206.01062.pdf",
     )
 
@@ -33,9 +33,9 @@ def convert_pipeline_local(num_splits: int = 1, pdf_backend: str = "dlparse_v4")
 
     docling_convert(
         input_path=importer.outputs["output_path"],
+        artifacts_path=artifacts.outputs["output_path"],
         pdf_split=first_split.output,
         pdf_backend=pdf_backend,
-        artifacts_path=artifacts.outputs["output_path"],
     )
 
 
