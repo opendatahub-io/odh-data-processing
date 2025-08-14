@@ -22,14 +22,3 @@ python docling_convert_pipeline.py
 ```
 
 This generates a `docling_pipeline.yaml` that you can now run in any Kubeflow Pipeline. This is a simple demo pipeline that downloads some PDFs, splits them into a handful of batches, and converts the batches across a cluster.
-
-
-## Screenshots of the demo pipeline from the Kubeflow Pipelines UI
-
-![Screenshot of the pipeline overview](/assets/pipeline_overview.png)
-
-![Screenshot of the pipeline loops](/assets/pipeline_loops.png)
-
-![Screenshot of a single pipeline loop iteration](/assets/pipeline_loop_iteration.png)
-
-![Screenshot of the conversion results from a single iteration](/assets/conversion_results.png)
