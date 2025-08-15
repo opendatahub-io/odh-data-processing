@@ -18,7 +18,7 @@ def import_pdfs(
     Import PDF filenames (comma-separated) from specified base URL.
 
     Args:
-        base_url: Base URL of the PDF files.
+        pdf_base_url: Base URL of the PDF files.
         pdf_filenames: List of PDF filenames to import.
         output_path: Path to the output directory for the PDF files.
     """

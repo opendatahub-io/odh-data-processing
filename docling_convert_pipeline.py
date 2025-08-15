@@ -13,13 +13,13 @@ from docling_convert_components import (
 )
 def convert_pipeline(
     num_splits: int = 3, 
-    pdf_backend: str = "dlparse_v4",
     pdf_base_url: str = "https://github.com/docling-project/docling/raw/v2.43.0/tests/data/pdf",
     pdf_filenames: str = "2203.01017v2.pdf,2206.01062.pdf,2305.03393v1-pg9.pdf,2305.03393v1.pdf,amt_handbook_sample.pdf,code_and_formula.pdf,multi_page.pdf,redp5110_sampled.pdf",
-    image_export_mode: str = "embedded",
-    table_mode: str = "accurate",
-    num_threads: int = 4,
-    timeout_per_document: int = 0,
+    docling_pdf_backend: str = "dlparse_v4",
+    docling_image_export_mode: str = "embedded",
+    docling_table_mode: str = "accurate",
+    docling_num_threads: int = 4,
+    docling_timeout_per_document: int = 0,
 ):
 
     importer = import_pdfs(
@@ -39,11 +39,11 @@ def convert_pipeline(
             input_path=importer.outputs["output_path"],
             artifacts_path=artifacts.outputs["output_path"],
             pdf_split=pdf_split,
-            pdf_backend=pdf_backend,
-            image_export_mode=image_export_mode,
-            table_mode=table_mode,
-            num_threads=num_threads,
-            timeout_per_document=timeout_per_document,
+            pdf_backend=docling_pdf_backend,
+            image_export_mode=docling_image_export_mode,
+            table_mode=docling_table_mode,
+            num_threads=docling_num_threads,
+            timeout_per_document=docling_timeout_per_document,
         )
         
         converter.set_caching_options(False)

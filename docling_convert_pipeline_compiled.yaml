@@ -2,14 +2,14 @@
 # Name: data-processing-docling-pipeline
 # Description: Docling convert pipeline by the Data Processing Team
 # Inputs:
-#    image_export_mode: str [Default: 'embedded']
+#    docling_image_export_mode: str [Default: 'embedded']
+#    docling_num_threads: int [Default: 4.0]
+#    docling_pdf_backend: str [Default: 'dlparse_v4']
+#    docling_table_mode: str [Default: 'accurate']
+#    docling_timeout_per_document: int [Default: 0.0]
 #    num_splits: int [Default: 3.0]
-#    num_threads: int [Default: 4.0]
-#    pdf_backend: str [Default: 'dlparse_v4']
 #    pdf_base_url: str [Default: 'https://github.com/docling-project/docling/raw/v2.43.0/tests/data/pdf']
 #    pdf_filenames: str [Default: '2203.01017v2.pdf,2206.01062.pdf,2305.03393v1-pg9.pdf,2305.03393v1.pdf,amt_handbook_sample.pdf,code_and_formula.pdf,multi_page.pdf,redp5110_sampled.pdf']
-#    table_mode: str [Default: 'accurate']
-#    timeout_per_document: int [Default: 0.0]
 components:
   comp-create-pdf-splits:
     executorLabel: exec-create-pdf-splits
@@ -96,17 +96,17 @@ components:
                 componentInputArtifact: pipelinechannel--import-pdfs-output_path
             parameters:
               image_export_mode:
-                componentInputParameter: pipelinechannel--image_export_mode
+                componentInputParameter: pipelinechannel--docling_image_export_mode
               num_threads:
-                componentInputParameter: pipelinechannel--num_threads
+                componentInputParameter: pipelinechannel--docling_num_threads
               pdf_backend:
-                componentInputParameter: pipelinechannel--pdf_backend
+                componentInputParameter: pipelinechannel--docling_pdf_backend
               pdf_split:
                 componentInputParameter: pipelinechannel--create-pdf-splits-Output-loop-item
               table_mode:
-                componentInputParameter: pipelinechannel--table_mode
+                componentInputParameter: pipelinechannel--docling_table_mode
               timeout_per_document:
-                componentInputParameter: pipelinechannel--timeout_per_document
+                componentInputParameter: pipelinechannel--docling_timeout_per_document
           taskInfo:
             name: docling-convert
     inputDefinitions:
@@ -124,21 +124,22 @@ components:
           parameterType: LIST
         pipelinechannel--create-pdf-splits-Output-loop-item:
           parameterType: LIST
-        pipelinechannel--image_export_mode:
+        pipelinechannel--docling_image_export_mode:
           parameterType: STRING
-        pipelinechannel--num_threads:
+        pipelinechannel--docling_num_threads:
           parameterType: NUMBER_INTEGER
-        pipelinechannel--pdf_backend:
+        pipelinechannel--docling_pdf_backend:
           parameterType: STRING
-        pipelinechannel--table_mode:
+        pipelinechannel--docling_table_mode:
           parameterType: STRING
-        pipelinechannel--timeout_per_document:
+        pipelinechannel--docling_timeout_per_document:
           parameterType: NUMBER_INTEGER
   comp-import-pdfs:
     executorLabel: exec-import-pdfs
     inputDefinitions:
       parameters:
         pdf_base_url:
+          description: Base URL of the PDF files.
           parameterType: STRING
         pdf_filenames:
           description: List of PDF filenames to import.
@@ -346,20 +347,20 @@ deploymentSpec:
           \ *\n\ndef import_pdfs(\n    pdf_base_url: str,\n    pdf_filenames: str,\n\
           \    output_path: dsl.Output[dsl.Artifact],\n):\n    \"\"\"\n    Import\
           \ PDF filenames (comma-separated) from specified base URL.\n\n    Args:\n\
-          \        base_url: Base URL of the PDF files.\n        pdf_filenames: List\
-          \ of PDF filenames to import.\n        output_path: Path to the output directory\
-          \ for the PDF files.\n    \"\"\"\n    from pathlib import Path\n    import\
-          \ requests\n\n    output_path_p = Path(output_path.path)\n    output_path_p.mkdir(parents=True,\
-          \ exist_ok=True)\n\n    if not pdf_base_url:\n        raise ValueError(\"\
-          base_url must be provided\")\n\n    filenames = [name.strip() for name in\
-          \ pdf_filenames.split(\",\") if name.strip()]\n    if not filenames:\n \
-          \       raise ValueError(\"pdf_filenames must contain at least one filename\
-          \ (comma-separated)\")\n\n    for name in filenames:\n        url = f\"\
-          {pdf_base_url.rstrip('/')}/{name.lstrip('/')}\"\n        dest = output_path_p\
-          \ / name\n        print(f\"import-test-pdfs: downloading {url} -> {dest}\"\
-          , flush=True)\n        with requests.get(url, stream=True, timeout=30) as\
-          \ resp:\n            resp.raise_for_status()\n            with dest.open(\"\
-          wb\") as f:\n                for chunk in resp.iter_content(chunk_size=8192):\n\
+          \        pdf_base_url: Base URL of the PDF files.\n        pdf_filenames:\
+          \ List of PDF filenames to import.\n        output_path: Path to the output\
+          \ directory for the PDF files.\n    \"\"\"\n    from pathlib import Path\n\
+          \    import requests\n\n    output_path_p = Path(output_path.path)\n   \
+          \ output_path_p.mkdir(parents=True, exist_ok=True)\n\n    if not pdf_base_url:\n\
+          \        raise ValueError(\"base_url must be provided\")\n\n    filenames\
+          \ = [name.strip() for name in pdf_filenames.split(\",\") if name.strip()]\n\
+          \    if not filenames:\n        raise ValueError(\"pdf_filenames must contain\
+          \ at least one filename (comma-separated)\")\n\n    for name in filenames:\n\
+          \        url = f\"{pdf_base_url.rstrip('/')}/{name.lstrip('/')}\"\n    \
+          \    dest = output_path_p / name\n        print(f\"import-test-pdfs: downloading\
+          \ {url} -> {dest}\", flush=True)\n        with requests.get(url, stream=True,\
+          \ timeout=30) as resp:\n            resp.raise_for_status()\n          \
+          \  with dest.open(\"wb\") as f:\n                for chunk in resp.iter_content(chunk_size=8192):\n\
           \                    if chunk:\n                        f.write(chunk)\n\
           \    print(\"import-test-pdfs: done\", flush=True)\n\n"
         image: python:3.11
@@ -416,16 +417,16 @@ root:
               taskOutputParameter:
                 outputParameterKey: Output
                 producerTask: create-pdf-splits
-            pipelinechannel--image_export_mode:
-              componentInputParameter: image_export_mode
-            pipelinechannel--num_threads:
-              componentInputParameter: num_threads
-            pipelinechannel--pdf_backend:
-              componentInputParameter: pdf_backend
-            pipelinechannel--table_mode:
-              componentInputParameter: table_mode
-            pipelinechannel--timeout_per_document:
-              componentInputParameter: timeout_per_document
+            pipelinechannel--docling_image_export_mode:
+              componentInputParameter: docling_image_export_mode
+            pipelinechannel--docling_num_threads:
+              componentInputParameter: docling_num_threads
+            pipelinechannel--docling_pdf_backend:
+              componentInputParameter: docling_pdf_backend
+            pipelinechannel--docling_table_mode:
+              componentInputParameter: docling_table_mode
+            pipelinechannel--docling_timeout_per_document:
+              componentInputParameter: docling_timeout_per_document
         parameterIterator:
           itemInput: pipelinechannel--create-pdf-splits-Output-loop-item
           items:
@@ -447,22 +448,30 @@ root:
           name: import-pdfs
   inputDefinitions:
     parameters:
-      image_export_mode:
+      docling_image_export_mode:
         defaultValue: embedded
         isOptional: true
         parameterType: STRING
+      docling_num_threads:
+        defaultValue: 4.0
+        isOptional: true
+        parameterType: NUMBER_INTEGER
+      docling_pdf_backend:
+        defaultValue: dlparse_v4
+        isOptional: true
+        parameterType: STRING
+      docling_table_mode:
+        defaultValue: accurate
+        isOptional: true
+        parameterType: STRING
+      docling_timeout_per_document:
+        defaultValue: 0.0
+        isOptional: true
+        parameterType: NUMBER_INTEGER
       num_splits:
         defaultValue: 3.0
         isOptional: true
         parameterType: NUMBER_INTEGER
-      num_threads:
-        defaultValue: 4.0
-        isOptional: true
-        parameterType: NUMBER_INTEGER
-      pdf_backend:
-        defaultValue: dlparse_v4
-        isOptional: true
-        parameterType: STRING
       pdf_base_url:
         defaultValue: https://github.com/docling-project/docling/raw/v2.43.0/tests/data/pdf
         isOptional: true
@@ -471,13 +480,5 @@ root:
         defaultValue: 2203.01017v2.pdf,2206.01062.pdf,2305.03393v1-pg9.pdf,2305.03393v1.pdf,amt_handbook_sample.pdf,code_and_formula.pdf,multi_page.pdf,redp5110_sampled.pdf
         isOptional: true
         parameterType: STRING
-      table_mode:
-        defaultValue: accurate
-        isOptional: true
-        parameterType: STRING
-      timeout_per_document:
-        defaultValue: 0.0
-        isOptional: true
-        parameterType: NUMBER_INTEGER
 schemaVersion: 2.1.0
 sdkVersion: kfp-2.14.2
