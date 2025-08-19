@@ -185,7 +185,7 @@ deploymentSpec:
           \    \"\"\"\n    from pathlib import Path\n\n    input_path_p = Path(input_path.path)\n\
           \n    all_pdfs = [path.name for path in input_path_p.glob(\"*.pdf\")]\n\
           \    return [all_pdfs[i::num_splits] for i in range(num_splits)]\n\n"
-        image: python:3.11
+        image: registry.access.redhat.com/ubi9/python-311:9.6-1755074620
     exec-docling-convert:
       container:
         args:
@@ -272,7 +272,7 @@ deploymentSpec:
           \    print(f\"docling-convert: saving {output_md_path}\", flush=True)\n\
           \        result.document.save_as_markdown(output_md_path, image_mode=ImageRefMode(image_export_mode))\n\
           \n    print(\"docling-convert: done\", flush=True)\n\n"
-        image: quay.io/fabianofranz/docling:v2.43.0
+        image: quay.io/fabianofranz/docling-ubi9:2.45.0
         resources:
           cpuLimit: 4.0
           cpuRequest: 0.5
@@ -316,7 +316,7 @@ deploymentSpec:
           \ exist_ok=True)\n\n    download_models(\n        output_dir=output_path_p,\n\
           \        progress=True,\n        with_layout=True,\n        with_tableformer=True,\n\
           \        with_easyocr=True,\n    )\n\n"
-        image: quay.io/fabianofranz/docling:v2.43.0
+        image: quay.io/fabianofranz/docling-ubi9:2.45.0
     exec-import-pdfs:
       container:
         args:
@@ -363,7 +363,7 @@ deploymentSpec:
           \  with dest.open(\"wb\") as f:\n                for chunk in resp.iter_content(chunk_size=8192):\n\
           \                    if chunk:\n                        f.write(chunk)\n\
           \    print(\"import-test-pdfs: done\", flush=True)\n\n"
-        image: python:3.11
+        image: registry.access.redhat.com/ubi9/python-311:9.6-1755074620
 pipelineInfo:
   description: Docling convert pipeline by the Data Processing Team
   name: data-processing-docling-pipeline

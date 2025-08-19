@@ -2,7 +2,8 @@ from typing import List
 
 from kfp import dsl
 
-PYTHON_BASE_IMAGE = "python:3.11"
+PYTHON_BASE_IMAGE = "registry.access.redhat.com/ubi9/python-311:9.6-1755074620"
+DOCLING_BASE_IMAGE = "quay.io/fabianofranz/docling-ubi9:2.45.0"
 
 
 @dsl.component(
@@ -70,7 +71,7 @@ def create_pdf_splits(
 
 
 @dsl.component(
-    base_image="quay.io/fabianofranz/docling:v2.43.0",
+    base_image=DOCLING_BASE_IMAGE,
 )
 def download_docling_models(
     output_path: dsl.Output[dsl.Artifact],
@@ -98,7 +99,7 @@ def download_docling_models(
 
 
 @dsl.component(
-    base_image="quay.io/fabianofranz/docling:v2.43.0",
+    base_image=DOCLING_BASE_IMAGE,
 )
 def docling_convert(
     input_path: dsl.Input[dsl.Artifact],
