@@ -25,7 +25,7 @@ ENV OMP_NUM_THREADS=4 \
     PIP_NO_CACHE_DIR=1 \
     HOME=/opt/app-root/src \
     PATH=/opt/app-root/src:$PATH \
-    DOCLING_SERVE_ARTIFACTS_PATH=/opt/app-root/src/.cache/docling/models
+    DOCLING_ARTIFACTS_PATH=/opt/app-root/src/.cache/docling/models
 
 # This will install torch with *only* cpu support
 # Remove the --extra-index-url part if you want to install all the gpu requirements
@@ -38,7 +38,7 @@ ENV TORCH_HOME=/tmp/
 RUN docling --version
 
 RUN echo "Downloading models..." && \
-    docling-tools models download -o "${DOCLING_SERVE_ARTIFACTS_PATH}"
+    docling-tools models download -o "${DOCLING_ARTIFACTS_PATH}"
 
 # Running with `DOCLING_ARTIFACTS_PATH=/opt/app-root/src/.cache/docling/models` will use the
 # models included in the container image.
