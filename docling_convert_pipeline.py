@@ -20,6 +20,10 @@ def convert_pipeline(
     docling_table_mode: str = "accurate",
     docling_num_threads: int = 4,
     docling_timeout_per_document: int = 0,
+    docling_remote_model_enabled: bool = False,
+    docling_remote_model_endpoint_url: str = "",
+    docling_remote_model_api_key: str = "",
+    docling_remote_model_name: str = "",
 ):
 
     importer = import_pdfs(
@@ -44,6 +48,10 @@ def convert_pipeline(
             table_mode=docling_table_mode,
             num_threads=docling_num_threads,
             timeout_per_document=docling_timeout_per_document,
+            remote_model_enabled=docling_remote_model_enabled,
+            remote_model_endpoint_url=docling_remote_model_endpoint_url,
+            remote_model_api_key=docling_remote_model_api_key,
+            remote_model_name=docling_remote_model_name,
         )
         
         converter.set_caching_options(False)

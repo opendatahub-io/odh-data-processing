@@ -111,6 +111,10 @@ def docling_convert(
     table_mode: str = "accurate",
     num_threads: int = 4,
     timeout_per_document: int = 0,
+    remote_model_enabled: bool = False,
+    remote_model_endpoint_url: str = "",
+    remote_model_api_key: str = "",
+    remote_model_name: str = "",
 ):
     """
     Convert a list of PDF files to JSON and Markdown using Docling.
@@ -132,9 +136,13 @@ def docling_convert(
         PdfPipelineOptions,
         PdfBackend,
         TableFormerMode,
+        VlmPipelineOptions,
     )
     from docling.document_converter import DocumentConverter, PdfFormatOption  # pylint: disable=import-outside-toplevel  # noqa: PLC0415, E402
     from docling.datamodel.accelerator_options import AcceleratorDevice, AcceleratorOptions  # pylint: disable=import-outside-toplevel  # noqa: PLC0415, E402
+    from docling.datamodel.pipeline_options_vlm_model import ApiVlmOptions, ResponseFormat # pylint: disable=import-outside-toplevel  # noqa: PLC0415, E402
+    from docling.pipeline.vlm_pipeline import VlmPipeline # pylint: disable=import-outside-toplevel  # noqa: PLC0415, E402
+    from docling.pipeline.standard_pdf_pipeline import StandardPdfPipeline # pylint: disable=import-outside-toplevel  # noqa: PLC0415, E402
 
     allowed_backends = {e.value for e in PdfBackend}
     if pdf_backend not in allowed_backends:
@@ -150,13 +158,35 @@ def docling_convert(
     input_pdfs = [input_path_p / name for name in pdf_split]
     print(f"docling-convert: starting with backend='{pdf_backend}', files={len(input_pdfs)}", flush=True)
 
-    pipeline_options = PdfPipelineOptions()
-    pipeline_options.artifacts_path = artifacts_path_p
-    pipeline_options.do_ocr = True
-    pipeline_options.do_table_structure = True
-    pipeline_options.table_structure_options.do_cell_matching = True
-    pipeline_options.generate_page_images = True
-    pipeline_options.table_structure_options.mode = TableFormerMode(table_mode)
+    if remote_model_enabled:
+        pipeline_options = VlmPipelineOptions(
+            enable_remote_services=True,
+        )
+        pipeline_options.vlm_options = ApiVlmOptions(
+            url=remote_model_endpoint_url, # type: ignore[arg-type]
+            params=dict(
+                model_id=remote_model_name,
+                parameters=dict(
+                    max_new_tokens=400,
+                ),
+            ),
+            prompt="OCR the full page to markdown.",
+            timeout=360,
+            response_format=ResponseFormat.MARKDOWN,
+            headers={
+                "Authorization": f"Bearer {remote_model_api_key}",
+            },
+        )
+
+    else:
+        pipeline_options = PdfPipelineOptions()
+        pipeline_options.artifacts_path = artifacts_path_p
+        pipeline_options.do_ocr = True
+        pipeline_options.do_table_structure = True
+        pipeline_options.table_structure_options.do_cell_matching = True
+        pipeline_options.generate_page_images = True
+        pipeline_options.table_structure_options.mode = TableFormerMode(table_mode)
+
     pipeline_options.document_timeout = float(timeout_per_document)
     pipeline_options.accelerator_options = AcceleratorOptions(
         num_threads=num_threads, device=AcceleratorDevice.AUTO
@@ -189,6 +219,7 @@ def docling_convert(
             InputFormat.PDF: PdfFormatOption(
                 pipeline_options=pipeline_options,
                 backend=backend_class,
+                pipeline_cls=VlmPipeline if remote_model_enabled else StandardPdfPipeline,
             )
         }
     )
