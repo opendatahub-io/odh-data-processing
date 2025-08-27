@@ -2,8 +2,12 @@
 # Name: data-processing-docling-pipeline
 # Description: Docling convert pipeline by the Data Processing Team
 # Inputs:
+#    docling_allow_external_plugins: bool [Default: False]
+#    docling_force_ocr: bool [Default: False]
 #    docling_image_export_mode: str [Default: 'embedded']
 #    docling_num_threads: int [Default: 4.0]
+#    docling_ocr: bool [Default: True]
+#    docling_ocr_engine: str [Default: 'easyocr']
 #    docling_pdf_backend: str [Default: 'dlparse_v4']
 #    docling_remote_model_api_key: str [Default: '']
 #    docling_remote_model_enabled: bool [Default: False]
@@ -53,6 +57,14 @@ components:
             schemaVersion: 0.0.1
           description: Path to the input directory containing PDF files.
       parameters:
+        allow_external_plugins:
+          defaultValue: false
+          isOptional: true
+          parameterType: BOOLEAN
+        force_ocr:
+          defaultValue: false
+          isOptional: true
+          parameterType: BOOLEAN
         image_export_mode:
           defaultValue: embedded
           description: Mode to export images.
@@ -63,6 +75,14 @@ components:
           description: Number of threads to use per document processing.
           isOptional: true
           parameterType: NUMBER_INTEGER
+        ocr:
+          defaultValue: true
+          isOptional: true
+          parameterType: BOOLEAN
+        ocr_engine:
+          defaultValue: easyocr
+          isOptional: true
+          parameterType: STRING
         pdf_backend:
           defaultValue: dlparse_v4
           description: Backend to use for PDF processing.
@@ -129,10 +149,18 @@ components:
               input_path:
                 componentInputArtifact: pipelinechannel--import-pdfs-output_path
             parameters:
+              allow_external_plugins:
+                componentInputParameter: pipelinechannel--docling_allow_external_plugins
+              force_ocr:
+                componentInputParameter: pipelinechannel--docling_force_ocr
               image_export_mode:
                 componentInputParameter: pipelinechannel--docling_image_export_mode
               num_threads:
                 componentInputParameter: pipelinechannel--docling_num_threads
+              ocr:
+                componentInputParameter: pipelinechannel--docling_ocr
+              ocr_engine:
+                componentInputParameter: pipelinechannel--docling_ocr_engine
               pdf_backend:
                 componentInputParameter: pipelinechannel--docling_pdf_backend
               pdf_filenames:
@@ -166,10 +194,18 @@ components:
           parameterType: LIST
         pipelinechannel--create-pdf-splits-Output-loop-item:
           parameterType: LIST
+        pipelinechannel--docling_allow_external_plugins:
+          parameterType: BOOLEAN
+        pipelinechannel--docling_force_ocr:
+          parameterType: BOOLEAN
         pipelinechannel--docling_image_export_mode:
           parameterType: STRING
         pipelinechannel--docling_num_threads:
           parameterType: NUMBER_INTEGER
+        pipelinechannel--docling_ocr:
+          parameterType: BOOLEAN
+        pipelinechannel--docling_ocr_engine:
+          parameterType: STRING
         pipelinechannel--docling_pdf_backend:
           parameterType: STRING
         pipelinechannel--docling_remote_model_api_key:
@@ -302,32 +338,37 @@ deploymentSpec:
           ,\n    num_threads: int = 4,\n    timeout_per_document: int = 300,\n   \
           \ remote_model_enabled: bool = False,\n    remote_model_endpoint_url: str\
           \ = \"\",\n    remote_model_api_key: str = \"\",\n    remote_model_name:\
-          \ str = \"\",\n):\n    \"\"\"\n    Convert a list of PDF files to JSON and\
-          \ Markdown using Docling.\n\n    Args:\n        input_path: Path to the\
-          \ input directory containing PDF files.\n        artifacts_path: Path to\
-          \ the directory containing Docling models.\n        output_path: Path to\
-          \ the output directory for converted JSON and Markdown files.\n        pdf_filenames:\
-          \ List of PDF file names to process.\n        pdf_backend: Backend to use\
-          \ for PDF processing.\n        image_export_mode: Mode to export images.\n\
-          \        table_mode: Mode to detect tables.\n        num_threads: Number\
-          \ of threads to use per document processing.\n        timeout_per_document:\
-          \ Timeout per document processing.\n        remote_model_enabled: Whether\
-          \ or not to use a remote model.\n        remote_model_endpoint_url: URL\
-          \ of the remote model.\n        remote_model_api_key: API key or token for\
-          \ the remote model.\n        remote_model_name: Name of the remote model.\n\
-          \    \"\"\"\n    import os\n    from importlib import import_module\n  \
-          \  from pathlib import Path\n\n    from docling_core.types.doc.base import\
-          \ ImageRefMode  # pylint: disable=import-outside-toplevel  # noqa: PLC0415,\
-          \ E402\n    from docling.datamodel.base_models import InputFormat  # pylint:\
-          \ disable=import-outside-toplevel  # noqa: PLC0415, E402\n    from docling.datamodel.pipeline_options\
-          \ import (  # pylint: disable=import-outside-toplevel  # noqa: PLC0415,\
-          \ E402\n        PdfPipelineOptions,\n        PdfBackend,\n        TableFormerMode,\n\
-          \        VlmPipelineOptions,\n    )\n    from docling.document_converter\
-          \ import DocumentConverter, PdfFormatOption  # pylint: disable=import-outside-toplevel\
-          \  # noqa: PLC0415, E402\n    from docling.datamodel.accelerator_options\
-          \ import AcceleratorDevice, AcceleratorOptions  # pylint: disable=import-outside-toplevel\
-          \  # noqa: PLC0415, E402\n    from docling.datamodel.pipeline_options_vlm_model\
-          \ import ApiVlmOptions, ResponseFormat # pylint: disable=import-outside-toplevel\
+          \ str = \"\",\n    ocr: bool = True,\n    force_ocr: bool = False,\n   \
+          \ ocr_engine: str = \"easyocr\",\n    allow_external_plugins: bool = False,\n\
+          ):\n    \"\"\"\n    Convert a list of PDF files to JSON and Markdown using\
+          \ Docling.\n\n    Args:\n        input_path: Path to the input directory\
+          \ containing PDF files.\n        artifacts_path: Path to the directory containing\
+          \ Docling models.\n        output_path: Path to the output directory for\
+          \ converted JSON and Markdown files.\n        pdf_filenames: List of PDF\
+          \ file names to process.\n        pdf_backend: Backend to use for PDF processing.\n\
+          \        image_export_mode: Mode to export images.\n        table_mode:\
+          \ Mode to detect tables.\n        num_threads: Number of threads to use\
+          \ per document processing.\n        timeout_per_document: Timeout per document\
+          \ processing.\n        remote_model_enabled: Whether or not to use a remote\
+          \ model.\n        remote_model_endpoint_url: URL of the remote model.\n\
+          \        remote_model_api_key: API key or token for the remote model.\n\
+          \        remote_model_name: Name of the remote model.\n    \"\"\"\n    import\
+          \ os\n    from importlib import import_module\n    from pathlib import Path\n\
+          \n    from docling_core.types.doc.base import ImageRefMode  # pylint: disable=import-outside-toplevel\
+          \  # noqa: PLC0415, E402\n    from docling.datamodel.base_models import\
+          \ InputFormat  # pylint: disable=import-outside-toplevel  # noqa: PLC0415,\
+          \ E402\n    from docling.models.factories.ocr_factory import OcrFactory\n\
+          \    from docling.datamodel.pipeline_options import (  # pylint: disable=import-outside-toplevel\
+          \  # noqa: PLC0415, E402\n        PdfPipelineOptions,\n        PdfBackend,\n\
+          \        TableFormerMode,\n        VlmPipelineOptions,\n        EasyOcrOptions,\n\
+          \        TesseractCliOcrOptions,\n        TesseractOcrOptions,\n       \
+          \ OcrEngine,\n        OcrMacOptions,\n        RapidOcrOptions,\n    )\n\
+          \    from docling.document_converter import DocumentConverter, PdfFormatOption\
+          \  # pylint: disable=import-outside-toplevel  # noqa: PLC0415, E402\n  \
+          \  from docling.datamodel.accelerator_options import AcceleratorDevice,\
+          \ AcceleratorOptions  # pylint: disable=import-outside-toplevel  # noqa:\
+          \ PLC0415, E402\n    from docling.datamodel.pipeline_options_vlm_model import\
+          \ ApiVlmOptions, ResponseFormat # pylint: disable=import-outside-toplevel\
           \  # noqa: PLC0415, E402\n    from docling.pipeline.vlm_pipeline import\
           \ VlmPipeline # pylint: disable=import-outside-toplevel  # noqa: PLC0415,\
           \ E402\n    from docling.pipeline.standard_pdf_pipeline import StandardPdfPipeline\
@@ -343,11 +384,20 @@ deploymentSpec:
           \ = {e.value for e in ImageRefMode}\n    if image_export_mode not in allowed_image_export_modes:\n\
           \        raise ValueError(\n            f\"Invalid image_export_mode: {image_export_mode}.\
           \ Must be one of {sorted(allowed_image_export_modes)}\"\n        )\n\n \
-          \   input_path_p = Path(input_path.path)\n    artifacts_path_p = Path(artifacts_path.path)\n\
-          \    output_path_p = Path(output_path.path)\n    output_path_p.mkdir(parents=True,\
-          \ exist_ok=True)\n\n    input_pdfs = [input_path_p / name for name in pdf_filenames]\n\
-          \    print(f\"docling-convert: starting with backend='{pdf_backend}', files={len(input_pdfs)}\"\
-          , flush=True)\n\n    if remote_model_enabled:\n        if not remote_model_endpoint_url:\n\
+          \   if not allow_external_plugins:\n        allowed_ocr_engines = {e.value\
+          \ for e in OcrEngine}\n        if ocr_engine not in allowed_ocr_engines:\n\
+          \            raise ValueError(\n                f\"Invalid ocr_engine: {ocr_engine}.\
+          \ Must be one of {sorted(allowed_ocr_engines)}\"\n            )\n\n    #\
+          \ Dictionary to map the engine name string to the corresponding class\n\
+          \    ocr_engine_map = {\n        \"easyocr\": EasyOcrOptions,\n        \"\
+          tesseract_cli\": TesseractCliOcrOptions,\n        \"tesseract\": TesseractOcrOptions,\n\
+          \        \"ocrmac\": OcrMacOptions,\n        \"rapidocr\": RapidOcrOptions,\n\
+          \    }\n\n    input_path_p = Path(input_path.path)\n    artifacts_path_p\
+          \ = Path(artifacts_path.path)\n    output_path_p = Path(output_path.path)\n\
+          \    output_path_p.mkdir(parents=True, exist_ok=True)\n\n    input_pdfs\
+          \ = [input_path_p / name for name in pdf_filenames]\n    print(f\"docling-convert:\
+          \ starting with backend='{pdf_backend}', files={len(input_pdfs)}\", flush=True)\n\
+          \n    if remote_model_enabled:\n        if not remote_model_endpoint_url:\n\
           \            raise ValueError(\"remote_model_endpoint_url must be provided\
           \ when remote_model_enabled is True\")\n\n        pipeline_options = VlmPipelineOptions(\n\
           \            enable_remote_services=True,\n        )\n        pipeline_options.vlm_options\
@@ -361,7 +411,10 @@ deploymentSpec:
           \     headers={\n                \"Authorization\": f\"Bearer {remote_model_api_key}\"\
           ,\n            },\n        )\n\n    else:\n        pipeline_options = PdfPipelineOptions()\n\
           \        pipeline_options.artifacts_path = artifacts_path_p\n        pipeline_options.do_ocr\
-          \ = True\n        pipeline_options.do_table_structure = True\n        pipeline_options.table_structure_options.do_cell_matching\
+          \ = ocr\n        if ocr and ocr_engine in ocr_engine_map:\n            OcrOptionsClass\
+          \ = ocr_engine_map[ocr_engine]\n            ocr_options_instance = OcrOptionsClass(force_full_page_ocr=force_ocr)\n\
+          \            pipeline_options.ocr_options = ocr_options_instance\n     \
+          \   pipeline_options.do_table_structure = True\n        pipeline_options.table_structure_options.do_cell_matching\
           \ = True\n        pipeline_options.generate_page_images = True\n       \
           \ pipeline_options.table_structure_options.mode = TableFormerMode(table_mode)\n\
           \n    pipeline_options.document_timeout = float(timeout_per_document)\n\
@@ -556,10 +609,18 @@ root:
               taskOutputParameter:
                 outputParameterKey: Output
                 producerTask: create-pdf-splits
+            pipelinechannel--docling_allow_external_plugins:
+              componentInputParameter: docling_allow_external_plugins
+            pipelinechannel--docling_force_ocr:
+              componentInputParameter: docling_force_ocr
             pipelinechannel--docling_image_export_mode:
               componentInputParameter: docling_image_export_mode
             pipelinechannel--docling_num_threads:
               componentInputParameter: docling_num_threads
+            pipelinechannel--docling_ocr:
+              componentInputParameter: docling_ocr
+            pipelinechannel--docling_ocr_engine:
+              componentInputParameter: docling_ocr_engine
             pipelinechannel--docling_pdf_backend:
               componentInputParameter: docling_pdf_backend
             pipelinechannel--docling_remote_model_api_key:
@@ -606,6 +667,14 @@ root:
           name: import-pdfs
   inputDefinitions:
     parameters:
+      docling_allow_external_plugins:
+        defaultValue: false
+        isOptional: true
+        parameterType: BOOLEAN
+      docling_force_ocr:
+        defaultValue: false
+        isOptional: true
+        parameterType: BOOLEAN
       docling_image_export_mode:
         defaultValue: embedded
         isOptional: true
@@ -614,6 +683,14 @@ root:
         defaultValue: 4.0
         isOptional: true
         parameterType: NUMBER_INTEGER
+      docling_ocr:
+        defaultValue: true
+        isOptional: true
+        parameterType: BOOLEAN
+      docling_ocr_engine:
+        defaultValue: easyocr
+        isOptional: true
+        parameterType: STRING
       docling_pdf_backend:
         defaultValue: dlparse_v4
         isOptional: true
