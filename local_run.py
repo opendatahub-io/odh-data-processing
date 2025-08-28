@@ -19,7 +19,7 @@ def take_first_split(splits: List[List[str]]) -> List[str]:
 def convert_pipeline_local():
     importer = import_pdfs(
         pdf_base_url="https://github.com/docling-project/docling/raw/v2.43.0/tests/data/pdf",
-        pdf_filenames="2203.01017v2.pdf",
+        pdf_filenames="2203.01017v2.pdf,2206.01062.pdf",
     )
 
     pdf_splits = create_pdf_splits(

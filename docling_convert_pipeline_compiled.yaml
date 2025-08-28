@@ -443,8 +443,7 @@ root:
         taskInfo:
           name: create-pdf-splits
       download-docling-models:
-        cachingOptions:
-          enableCache: true
+        cachingOptions: {}
         componentRef:
           name: comp-download-docling-models
         taskInfo:
@@ -496,8 +495,7 @@ root:
         taskInfo:
           name: for-loop-1
       import-pdfs:
-        cachingOptions:
-          enableCache: true
+        cachingOptions: {}
         componentRef:
           name: comp-import-pdfs
         inputs:

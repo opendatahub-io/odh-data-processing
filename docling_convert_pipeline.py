@@ -30,6 +30,7 @@ def convert_pipeline(
         pdf_base_url=pdf_base_url,
         pdf_filenames=pdf_filenames,
     )
+    importer.set_caching_options(False)
 
     pdf_splits = create_pdf_splits(
         input_path=importer.outputs["output_path"],
@@ -37,6 +38,7 @@ def convert_pipeline(
     )
 
     artifacts = download_docling_models()
+    artifacts.set_caching_options(False)
 
     with dsl.ParallelFor(pdf_splits.output) as pdf_split:
         converter = docling_convert(
