@@ -173,6 +173,7 @@ def docling_convert(
             prompt="OCR the full page to markdown.",
             timeout=360,
             response_format=ResponseFormat.MARKDOWN,
+            # TODO: remote_model_api_key should be something other than a KFP param (maybe a secret?), so it's not exposed to the UI
             headers={
                 "Authorization": f"Bearer {remote_model_api_key}",
             },
