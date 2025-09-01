@@ -10,7 +10,7 @@
 #    docling_remote_model_endpoint_url: str [Default: '']
 #    docling_remote_model_name: str [Default: '']
 #    docling_table_mode: str [Default: 'accurate']
-#    docling_timeout_per_document: int [Default: 0.0]
+#    docling_timeout_per_document: int [Default: 300.0]
 #    num_splits: int [Default: 3.0]
 #    pdf_base_url: str [Default: 'https://github.com/docling-project/docling/raw/v2.43.0/tests/data/pdf']
 #    pdf_filenames: str [Default: '2203.01017v2.pdf,2206.01062.pdf,2305.03393v1-pg9.pdf,2305.03393v1.pdf,amt_handbook_sample.pdf,code_and_formula.pdf,multi_page.pdf,redp5110_sampled.pdf']
@@ -265,7 +265,9 @@ deploymentSpec:
           \    \"\"\"\n    from pathlib import Path # pylint: disable=import-outside-toplevel\
           \  # noqa: PLC0415, E402\n\n    input_path_p = Path(input_path.path)\n\n\
           \    all_pdfs = [path.name for path in input_path_p.glob(\"*.pdf\")]\n \
-          \   return [all_pdfs[i::num_splits] for i in range(num_splits)]\n\n"
+          \   all_splits = [all_pdfs[i::num_splits] for i in range(num_splits)]\n\
+          \    filled_splits = list(filter(None, all_splits))\n    return filled_splits\n\
+          \n"
         image: registry.access.redhat.com/ubi9/python-311:9.6-1755074620
     exec-docling-convert:
       container:
@@ -637,7 +639,7 @@ root:
         isOptional: true
         parameterType: STRING
       docling_timeout_per_document:
-        defaultValue: 0.0
+        defaultValue: 300.0
         isOptional: true
         parameterType: NUMBER_INTEGER
       num_splits:

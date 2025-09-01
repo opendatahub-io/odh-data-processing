@@ -28,7 +28,7 @@ def convert_pipeline(
     docling_image_export_mode: str = "embedded",
     docling_table_mode: str = "accurate",
     docling_num_threads: int = 4,
-    docling_timeout_per_document: int = 0,
+    docling_timeout_per_document: int = 300,
     docling_remote_model_enabled: bool = False,
     docling_remote_model_endpoint_url: str = "",
     docling_remote_model_api_key: str = "",
