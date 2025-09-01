@@ -102,7 +102,9 @@ def create_pdf_splits(
     input_path_p = Path(input_path.path)
 
     all_pdfs = [path.name for path in input_path_p.glob("*.pdf")]
-    return [all_pdfs[i::num_splits] for i in range(num_splits)]
+    all_splits = [all_pdfs[i::num_splits] for i in range(num_splits)]
+    filled_splits = list(filter(None, all_splits))
+    return filled_splits
 
 
 @dsl.component(
