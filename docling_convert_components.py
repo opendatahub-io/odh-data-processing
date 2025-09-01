@@ -8,45 +8,74 @@ DOCLING_BASE_IMAGE = "quay.io/fabianofranz/docling-ubi9:2.45.0"
 
 @dsl.component(
     base_image=PYTHON_BASE_IMAGE,
-    packages_to_install=["requests"],
+    packages_to_install=["boto3", "requests"],
 )
 def import_pdfs(
-    pdf_base_url: str,
-    pdf_filenames: str,
+    filenames: str,
+    base_url: str,
     output_path: dsl.Output[dsl.Artifact],
+    from_s3: bool = False,
+    s3_endpoint: str = "",
+    s3_access_key: str = "",
+    s3_secret_key: str = "",
+    s3_bucket: str = "",
+    s3_prefix: str = "",
 ):
     """
-    Import PDF filenames (comma-separated) from specified base URL.
+    Import PDF filenames (comma-separated) from specified URL or S3 bucket.
 
     Args:
-        pdf_base_url: Base URL of the PDF files.
-        pdf_filenames: List of PDF filenames to import.
+        filenames: List of PDF filenames to import.
+        base_url: Base URL of the PDF files.
         output_path: Path to the output directory for the PDF files.
+        from_s3: Whether or not to import from S3.
+        s3_endpoint: S3 endpoint of the PDF files.
+        s3_access_key: S3 access key of the PDF files.
+        s3_secret_key: S3 secret key of the PDF files.
+        s3_bucket: S3 bucket of the PDF files.
+        s3_prefix: S3 prefix of the PDF files.
     """
-    from pathlib import Path
-    import requests
+    import boto3 # pylint: disable=import-outside-toplevel  # noqa: PLC0415, E402
+    from pathlib import Path # pylint: disable=import-outside-toplevel  # noqa: PLC0415, E402
+    import requests # pylint: disable=import-outside-toplevel  # noqa: PLC0415, E402
+
+    filenames_list = [name.strip() for name in filenames.split(",") if name.strip()]
+    if not filenames_list:
+        raise ValueError("filenames must contain at least one filename (comma-separated)")
 
     output_path_p = Path(output_path.path)
     output_path_p.mkdir(parents=True, exist_ok=True)
+        
+    if from_s3:
+        s3_client = boto3.client(
+            's3',
+            endpoint_url=s3_endpoint,
+            aws_access_key_id=s3_access_key,
+            aws_secret_access_key=s3_secret_key,
+        )
+        
+        for filename in filenames_list:
+            orig = s3_prefix + "/" + filename
+            dest = output_path_p / filename
+            print(f"import-test-pdfs: downloading {orig} -> {dest} from s3", flush=True)
+            s3_client.download_file(s3_bucket, orig, dest)
+    else:
+        if not base_url:
+            raise ValueError("base_url must be provided")
 
-    if not pdf_base_url:
-        raise ValueError("base_url must be provided")
-
-    filenames = [name.strip() for name in pdf_filenames.split(",") if name.strip()]
-    if not filenames:
-        raise ValueError("pdf_filenames must contain at least one filename (comma-separated)")
-
-    for name in filenames:
-        url = f"{pdf_base_url.rstrip('/')}/{name.lstrip('/')}"
-        dest = output_path_p / name
-        print(f"import-test-pdfs: downloading {url} -> {dest}", flush=True)
-        with requests.get(url, stream=True, timeout=30) as resp:
-            resp.raise_for_status()
-            with dest.open("wb") as f:
-                for chunk in resp.iter_content(chunk_size=8192):
-                    if chunk:
-                        f.write(chunk)
+        for filename in filenames_list:
+            url = f"{base_url.rstrip('/')}/{filename.lstrip('/')}"
+            dest = output_path_p / filename
+            print(f"import-test-pdfs: downloading {url} -> {dest}", flush=True)
+            with requests.get(url, stream=True, timeout=30) as resp:
+                resp.raise_for_status()
+                with dest.open("wb") as f:
+                    for chunk in resp.iter_content(chunk_size=8192):
+                        if chunk:
+                            f.write(chunk)
+    
     print("import-test-pdfs: done", flush=True)
+
 
 @dsl.component(
     base_image=PYTHON_BASE_IMAGE,
@@ -62,7 +91,7 @@ def create_pdf_splits(
         input_path: Path to the input directory containing PDF files.
         num_splits: Number of splits to create.
     """
-    from pathlib import Path
+    from pathlib import Path # pylint: disable=import-outside-toplevel  # noqa: PLC0415, E402
 
     input_path_p = Path(input_path.path)
 
@@ -82,8 +111,8 @@ def download_docling_models(
     Args:
         output_path: Path to the output directory for Docling models.
     """
-    from pathlib import Path
-    from docling.utils.model_downloader import download_models
+    from pathlib import Path # pylint: disable=import-outside-toplevel  # noqa: PLC0415, E402
+    from docling.utils.model_downloader import download_models # pylint: disable=import-outside-toplevel  # noqa: PLC0415, E402
 
     output_path_p = Path(output_path.path)
 
@@ -121,10 +150,18 @@ def docling_convert(
 
     Args:
         input_path: Path to the input directory containing PDF files.
+        artifacts_path: Path to the directory containing Docling models.
+        output_path: Path to the output directory for converted JSON and Markdown files.
         pdf_split: List of PDF file names to process.
         pdf_backend: Backend to use for PDF processing.
-        artifacts_path: Path to the directory containing Docling models.
-        output_path: Path to the output directory for JSON and Markdown files.
+        image_export_mode: Mode to export images.
+        table_mode: Mode to detect tables.
+        num_threads: Number of threads to use per document processing.
+        timeout_per_document: Timeout per document processing.
+        remote_model_enabled: Whether or not to use a remote model.
+        remote_model_endpoint_url: URL of the remote model.
+        remote_model_api_key: API key or token for the remote model.
+        remote_model_name: Name of the remote model.
     """
     import os
     from importlib import import_module
@@ -173,7 +210,7 @@ def docling_convert(
             prompt="OCR the full page to markdown.",
             timeout=360,
             response_format=ResponseFormat.MARKDOWN,
-            # TODO: remote_model_api_key should be something other than a KFP param (maybe a secret?), so it's not exposed to the UI
+            # TODO: remote_model_api_key should be something other than a KFP param (maybe a secret?), so it's not exposed in the UI
             headers={
                 "Authorization": f"Bearer {remote_model_api_key}",
             },

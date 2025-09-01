@@ -1,9 +1,9 @@
 from kfp import dsl, compiler
 
 from docling_convert_components import (
-    import_pdfs, 
-    create_pdf_splits, 
-    download_docling_models, 
+    import_pdfs,
+    create_pdf_splits,
+    download_docling_models,
     docling_convert,
 )
 
@@ -12,9 +12,18 @@ from docling_convert_components import (
     description= "Docling convert pipeline by the Data Processing Team",
 )
 def convert_pipeline(
-    num_splits: int = 3, 
-    pdf_base_url: str = "https://github.com/docling-project/docling/raw/v2.43.0/tests/data/pdf",
+    num_splits: int = 3,
+    pdf_from_s3: bool = False,
     pdf_filenames: str = "2203.01017v2.pdf,2206.01062.pdf,2305.03393v1-pg9.pdf,2305.03393v1.pdf,amt_handbook_sample.pdf,code_and_formula.pdf,multi_page.pdf,redp5110_sampled.pdf",
+    # URL source params
+    pdf_base_url: str = "https://github.com/docling-project/docling/raw/v2.43.0/tests/data/pdf",
+    # S3 source params
+    pdf_s3_endpoint: str = "https://s3.us-east-2.amazonaws.com",
+    pdf_s3_access_key: str = "REDACTED",
+    pdf_s3_secret_key: str = "REDACTED",
+    pdf_s3_bucket: str = "my-bucket",
+    pdf_s3_prefix: str = "my-pdfs",
+    # Docling params
     docling_pdf_backend: str = "dlparse_v4",
     docling_image_export_mode: str = "embedded",
     docling_table_mode: str = "accurate",
@@ -25,10 +34,15 @@ def convert_pipeline(
     docling_remote_model_api_key: str = "",
     docling_remote_model_name: str = "",
 ):
-
     importer = import_pdfs(
-        pdf_base_url=pdf_base_url,
-        pdf_filenames=pdf_filenames,
+        filenames=pdf_filenames,
+        base_url=pdf_base_url,
+        from_s3=pdf_from_s3,
+        s3_endpoint=pdf_s3_endpoint,
+        s3_access_key=pdf_s3_access_key,
+        s3_secret_key=pdf_s3_secret_key,
+        s3_bucket=pdf_s3_bucket,
+        s3_prefix=pdf_s3_prefix,
     )
     importer.set_caching_options(False)
 
@@ -55,7 +69,6 @@ def convert_pipeline(
             remote_model_api_key=docling_remote_model_api_key,
             remote_model_name=docling_remote_model_name,
         )
-        
         converter.set_caching_options(False)
         converter.set_memory_request("1G")
         converter.set_memory_limit("6G")
