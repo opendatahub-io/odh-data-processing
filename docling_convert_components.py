@@ -11,9 +11,9 @@ DOCLING_BASE_IMAGE = "quay.io/fabianofranz/docling-ubi9:2.45.0"
     packages_to_install=["boto3", "requests"],
 )
 def import_pdfs(
+    output_path: dsl.Output[dsl.Artifact],
     filenames: str,
     base_url: str,
-    output_path: dsl.Output[dsl.Artifact],
     from_s3: bool = False,
     s3_endpoint: str = "",
     s3_access_key: str = "",
@@ -47,6 +47,12 @@ def import_pdfs(
     output_path_p.mkdir(parents=True, exist_ok=True)
         
     if from_s3:
+        if not s3_endpoint:
+            raise ValueError("s3_endpoint must be provided")
+
+        if not s3_bucket:
+            raise ValueError("s3_bucket must be provided")
+
         s3_client = boto3.client(
             's3',
             endpoint_url=s3_endpoint,
@@ -55,7 +61,7 @@ def import_pdfs(
         )
         
         for filename in filenames_list:
-            orig = s3_prefix + "/" + filename
+            orig = f"{s3_prefix.rstrip('/')}/{filename.lstrip('/')}"
             dest = output_path_p / filename
             print(f"import-test-pdfs: downloading {orig} -> {dest} from s3", flush=True)
             s3_client.download_file(s3_bucket, orig, dest)
@@ -134,12 +140,12 @@ def docling_convert(
     input_path: dsl.Input[dsl.Artifact],
     artifacts_path: dsl.Input[dsl.Artifact],
     output_path: dsl.Output[dsl.Artifact],
-    pdf_split: List[str],
+    pdf_filenames: List[str],
     pdf_backend: str = "dlparse_v4",
     image_export_mode: str = "embedded",
     table_mode: str = "accurate",
     num_threads: int = 4,
-    timeout_per_document: int = 0,
+    timeout_per_document: int = 300,
     remote_model_enabled: bool = False,
     remote_model_endpoint_url: str = "",
     remote_model_api_key: str = "",
@@ -152,7 +158,7 @@ def docling_convert(
         input_path: Path to the input directory containing PDF files.
         artifacts_path: Path to the directory containing Docling models.
         output_path: Path to the output directory for converted JSON and Markdown files.
-        pdf_split: List of PDF file names to process.
+        pdf_filenames: List of PDF file names to process.
         pdf_backend: Backend to use for PDF processing.
         image_export_mode: Mode to export images.
         table_mode: Mode to detect tables.
@@ -181,10 +187,25 @@ def docling_convert(
     from docling.pipeline.vlm_pipeline import VlmPipeline # pylint: disable=import-outside-toplevel  # noqa: PLC0415, E402
     from docling.pipeline.standard_pdf_pipeline import StandardPdfPipeline # pylint: disable=import-outside-toplevel  # noqa: PLC0415, E402
 
-    allowed_backends = {e.value for e in PdfBackend}
-    if pdf_backend not in allowed_backends:
+    if not pdf_filenames:
+        raise ValueError("pdf_filenames must be provided with the list of file names to process")
+
+    allowed_pdf_backends = {e.value for e in PdfBackend}
+    if pdf_backend not in allowed_pdf_backends:
         raise ValueError(
-            f"Invalid pdf_backend: {pdf_backend}. Must be one of {sorted(allowed_backends)}"
+            f"Invalid pdf_backend: {pdf_backend}. Must be one of {sorted(allowed_pdf_backends)}"
+        )
+
+    allowed_table_modes = {e.value for e in TableFormerMode}
+    if table_mode not in allowed_table_modes:
+        raise ValueError(
+            f"Invalid table_mode: {table_mode}. Must be one of {sorted(allowed_table_modes)}"
+        )
+
+    allowed_image_export_modes = {e.value for e in ImageRefMode}
+    if image_export_mode not in allowed_image_export_modes:
+        raise ValueError(
+            f"Invalid image_export_mode: {image_export_mode}. Must be one of {sorted(allowed_image_export_modes)}"
         )
 
     input_path_p = Path(input_path.path)
@@ -192,10 +213,13 @@ def docling_convert(
     output_path_p = Path(output_path.path)
     output_path_p.mkdir(parents=True, exist_ok=True)
 
-    input_pdfs = [input_path_p / name for name in pdf_split]
+    input_pdfs = [input_path_p / name for name in pdf_filenames]
     print(f"docling-convert: starting with backend='{pdf_backend}', files={len(input_pdfs)}", flush=True)
 
     if remote_model_enabled:
+        if not remote_model_endpoint_url:
+            raise ValueError("remote_model_endpoint_url must be provided when remote_model_enabled is True")
+
         pipeline_options = VlmPipelineOptions(
             enable_remote_services=True,
         )

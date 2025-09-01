@@ -58,7 +58,7 @@ def convert_pipeline(
         converter = docling_convert(
             input_path=importer.outputs["output_path"],
             artifacts_path=artifacts.outputs["output_path"],
-            pdf_split=pdf_split,
+            pdf_filenames=pdf_split,
             pdf_backend=docling_pdf_backend,
             image_export_mode=docling_image_export_mode,
             table_mode=docling_table_mode,

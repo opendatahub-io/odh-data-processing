@@ -34,7 +34,7 @@ def convert_pipeline_local():
     docling_convert(
         input_path=importer.outputs["output_path"],
         artifacts_path=artifacts.outputs["output_path"],
-        pdf_split=first_split.output,
+        pdf_filenames=first_split.output,
     )
 
 
