@@ -156,6 +156,10 @@ def docling_convert(
     force_ocr: bool = False,
     ocr_engine: str = "easyocr",
     allow_external_plugins: bool = False,
+    enrich_code: bool = False,
+    enrich_formula: bool = False,
+    enrich_picture_classes: bool = False,
+    enrich_picture_description: bool = False,
 ):
     """
     Convert a list of PDF files to JSON and Markdown using Docling.
@@ -272,6 +276,10 @@ def docling_convert(
     else:
         pipeline_options = PdfPipelineOptions()
         pipeline_options.artifacts_path = artifacts_path_p
+        pipeline_options.do_code_enrichment = enrich_code
+        pipeline_options.do_formula_enrichment = enrich_formula
+        pipeline_options.do_picture_classification = enrich_picture_classes
+        pipeline_options.do_picture_description = enrich_picture_description
         pipeline_options.do_ocr = ocr
         if ocr and ocr_engine in ocr_engine_map:
             OcrOptionsClass = ocr_engine_map[ocr_engine]

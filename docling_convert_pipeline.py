@@ -37,6 +37,10 @@ def convert_pipeline(
     docling_force_ocr: bool = False,
     docling_ocr_engine: str = "easyocr",
     docling_allow_external_plugins: bool = False,
+    docling_enrich_code: bool = False,
+    docling_enrich_formula: bool = False,
+    docling_enrich_picture_classes: bool = False,
+    docling_enrich_picture_description: bool = False,
 ):
     importer = import_pdfs(
         filenames=pdf_filenames,
@@ -76,6 +80,10 @@ def convert_pipeline(
             force_ocr=docling_force_ocr,
             ocr_engine=docling_ocr_engine,
             allow_external_plugins=docling_allow_external_plugins,
+            enrich_code=docling_enrich_code,
+            enrich_formula=docling_enrich_formula,
+            enrich_picture_classes=docling_enrich_picture_classes,
+            enrich_picture_description=docling_enrich_picture_description,
         )
         converter.set_caching_options(False)
         converter.set_memory_request("1G")
