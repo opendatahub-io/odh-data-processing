@@ -1,7 +1,0 @@
-[tool.basedpyright]
-typeCheckingMode = "basic"
-reportCallIssue = "none"            # hides “Argument missing…” (E1120 analog)
-reportUnknownArgumentType = "none"
-reportUnknownMemberType = "none"
-include = ["."]
-exclude = [".venv", "local_outputs", "**/__pycache__/**"]

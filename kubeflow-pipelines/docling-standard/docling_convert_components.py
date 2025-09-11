@@ -35,9 +35,9 @@ def import_pdfs(
         s3_bucket: S3 bucket of the PDF files.
         s3_prefix: S3 prefix of the PDF files.
     """
-    import boto3 # pylint: disable=import-outside-toplevel  # noqa: PLC0415, E402
-    from pathlib import Path # pylint: disable=import-outside-toplevel  # noqa: PLC0415, E402
-    import requests # pylint: disable=import-outside-toplevel  # noqa: PLC0415, E402
+    import boto3 # pylint: disable=import-outside-toplevel
+    from pathlib import Path # pylint: disable=import-outside-toplevel
+    import requests # pylint: disable=import-outside-toplevel
 
     filenames_list = [name.strip() for name in filenames.split(",") if name.strip()]
     if not filenames_list:
@@ -97,7 +97,7 @@ def create_pdf_splits(
         input_path: Path to the input directory containing PDF files.
         num_splits: Number of splits to create.
     """
-    from pathlib import Path # pylint: disable=import-outside-toplevel  # noqa: PLC0415, E402
+    from pathlib import Path # pylint: disable=import-outside-toplevel
 
     input_path_p = Path(input_path.path)
 
@@ -119,8 +119,8 @@ def download_docling_models(
     Args:
         output_path: Path to the output directory for Docling models.
     """
-    from pathlib import Path # pylint: disable=import-outside-toplevel  # noqa: PLC0415, E402
-    from docling.utils.model_downloader import download_models # pylint: disable=import-outside-toplevel  # noqa: PLC0415, E402
+    from pathlib import Path # pylint: disable=import-outside-toplevel
+    from docling.utils.model_downloader import download_models # pylint: disable=import-outside-toplevel
 
     output_path_p = Path(output_path.path)
 
@@ -148,10 +148,6 @@ def docling_convert(
     table_mode: str = "accurate",
     num_threads: int = 4,
     timeout_per_document: int = 300,
-    remote_model_enabled: bool = False,
-    remote_model_endpoint_url: str = "",
-    remote_model_api_key: str = "",
-    remote_model_name: str = "",
     ocr: bool = True,
     force_ocr: bool = False,
     ocr_engine: str = "easyocr",
@@ -174,23 +170,25 @@ def docling_convert(
         table_mode: Mode to detect tables.
         num_threads: Number of threads to use per document processing.
         timeout_per_document: Timeout per document processing.
-        remote_model_enabled: Whether or not to use a remote model.
-        remote_model_endpoint_url: URL of the remote model.
-        remote_model_api_key: API key or token for the remote model.
-        remote_model_name: Name of the remote model.
+        ocr: Whether or not to use OCR if needed.
+        force_ocr: Whether or not to force OCR.
+        ocr_engine: Engine to use for OCR.
+        allow_external_plugins: Whether or not to allow external plugins.
+        enrich_code: Whether or not to enrich code.
+        enrich_formula: Whether or not to enrich formula.
+        enrich_picture_classes: Whether or not to enrich picture classes.
+        enrich_picture_description: Whether or not to enrich picture description.
     """
-    import os
-    from importlib import import_module
-    from pathlib import Path
+    import os # pylint: disable=import-outside-toplevel
+    from importlib import import_module # pylint: disable=import-outside-toplevel
+    from pathlib import Path # pylint: disable=import-outside-toplevel
 
-    from docling_core.types.doc.base import ImageRefMode  # pylint: disable=import-outside-toplevel  # noqa: PLC0415, E402
-    from docling.datamodel.base_models import InputFormat  # pylint: disable=import-outside-toplevel  # noqa: PLC0415, E402
-    from docling.models.factories.ocr_factory import OcrFactory
-    from docling.datamodel.pipeline_options import (  # pylint: disable=import-outside-toplevel  # noqa: PLC0415, E402
+    from docling_core.types.doc.base import ImageRefMode  # pylint: disable=import-outside-toplevel
+    from docling.datamodel.base_models import InputFormat  # pylint: disable=import-outside-toplevel
+    from docling.datamodel.pipeline_options import (  # pylint: disable=import-outside-toplevel
         PdfPipelineOptions,
         PdfBackend,
         TableFormerMode,
-        VlmPipelineOptions,
         EasyOcrOptions,
         TesseractCliOcrOptions,
         TesseractOcrOptions,
@@ -198,11 +196,9 @@ def docling_convert(
         OcrMacOptions,
         RapidOcrOptions,
     )
-    from docling.document_converter import DocumentConverter, PdfFormatOption  # pylint: disable=import-outside-toplevel  # noqa: PLC0415, E402
-    from docling.datamodel.accelerator_options import AcceleratorDevice, AcceleratorOptions  # pylint: disable=import-outside-toplevel  # noqa: PLC0415, E402
-    from docling.datamodel.pipeline_options_vlm_model import ApiVlmOptions, ResponseFormat # pylint: disable=import-outside-toplevel  # noqa: PLC0415, E402
-    from docling.pipeline.vlm_pipeline import VlmPipeline # pylint: disable=import-outside-toplevel  # noqa: PLC0415, E402
-    from docling.pipeline.standard_pdf_pipeline import StandardPdfPipeline # pylint: disable=import-outside-toplevel  # noqa: PLC0415, E402
+    from docling.document_converter import DocumentConverter, PdfFormatOption  # pylint: disable=import-outside-toplevel
+    from docling.datamodel.accelerator_options import AcceleratorDevice, AcceleratorOptions  # pylint: disable=import-outside-toplevel
+    from docling.pipeline.standard_pdf_pipeline import StandardPdfPipeline # pylint: disable=import-outside-toplevel
 
     if not pdf_filenames:
         raise ValueError("pdf_filenames must be provided with the list of file names to process")
@@ -249,47 +245,21 @@ def docling_convert(
     input_pdfs = [input_path_p / name for name in pdf_filenames]
     print(f"docling-convert: starting with backend='{pdf_backend}', files={len(input_pdfs)}", flush=True)
 
-    if remote_model_enabled:
-        if not remote_model_endpoint_url:
-            raise ValueError("remote_model_endpoint_url must be provided when remote_model_enabled is True")
-
-        pipeline_options = VlmPipelineOptions(
-            enable_remote_services=True,
-        )
-        pipeline_options.vlm_options = ApiVlmOptions(
-            url=remote_model_endpoint_url, # type: ignore[arg-type]
-            params=dict(
-                model_id=remote_model_name,
-                parameters=dict(
-                    max_new_tokens=400,
-                ),
-            ),
-            prompt="OCR the full page to markdown.",
-            timeout=360,
-            response_format=ResponseFormat.MARKDOWN,
-            # TODO: remote_model_api_key should be something other than a KFP param (maybe a secret?), so it's not exposed in the UI
-            headers={
-                "Authorization": f"Bearer {remote_model_api_key}",
-            },
-        )
-
-    else:
-        pipeline_options = PdfPipelineOptions()
-        pipeline_options.artifacts_path = artifacts_path_p
-        pipeline_options.do_code_enrichment = enrich_code
-        pipeline_options.do_formula_enrichment = enrich_formula
-        pipeline_options.do_picture_classification = enrich_picture_classes
-        pipeline_options.do_picture_description = enrich_picture_description
-        pipeline_options.do_ocr = ocr
-        if ocr and ocr_engine in ocr_engine_map:
-            OcrOptionsClass = ocr_engine_map[ocr_engine]
-            ocr_options_instance = OcrOptionsClass(force_full_page_ocr=force_ocr)
-            pipeline_options.ocr_options = ocr_options_instance
-        pipeline_options.do_table_structure = True
-        pipeline_options.table_structure_options.do_cell_matching = True
-        pipeline_options.generate_page_images = True
-        pipeline_options.table_structure_options.mode = TableFormerMode(table_mode)
-
+    pipeline_options = PdfPipelineOptions()
+    pipeline_options.artifacts_path = artifacts_path_p
+    pipeline_options.do_code_enrichment = enrich_code
+    pipeline_options.do_formula_enrichment = enrich_formula
+    pipeline_options.do_picture_classification = enrich_picture_classes
+    pipeline_options.do_picture_description = enrich_picture_description
+    pipeline_options.do_ocr = ocr
+    if ocr and ocr_engine in ocr_engine_map:
+        OcrOptionsClass = ocr_engine_map[ocr_engine]
+        ocr_options_instance = OcrOptionsClass(force_full_page_ocr=force_ocr)
+        pipeline_options.ocr_options = ocr_options_instance
+    pipeline_options.do_table_structure = True
+    pipeline_options.table_structure_options.do_cell_matching = True
+    pipeline_options.generate_page_images = True
+    pipeline_options.table_structure_options.mode = TableFormerMode(table_mode)
     pipeline_options.document_timeout = float(timeout_per_document)
     pipeline_options.accelerator_options = AcceleratorOptions(
         num_threads=num_threads, device=AcceleratorDevice.AUTO
@@ -322,7 +292,7 @@ def docling_convert(
             InputFormat.PDF: PdfFormatOption(
                 pipeline_options=pipeline_options,
                 backend=backend_class,
-                pipeline_cls=VlmPipeline if remote_model_enabled else StandardPdfPipeline,
+                pipeline_cls=StandardPdfPipeline,
             )
         }
     )

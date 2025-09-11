@@ -1,2 +1,5 @@
 [MESSAGES CONTROL]
-disable=no-value-for-parameter
+disable=no-value-for-parameter, # KFP components define inputs and outputs that are supplied by pipelines
+    import-outside-toplevel,    # KFP components require imports inside functions
+    too-many-arguments,         # KFP components often need many parameters
+    too-many-locals             # Complex KFP logic may require more local variables

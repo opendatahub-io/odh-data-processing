@@ -8,7 +8,7 @@ from docling_convert_components import (
 )
 
 @dsl.pipeline(
-    name= "data-processing-docling-pipeline",
+    name= "data-processing-docling-vlm-pipeline",
     description= "Docling convert pipeline by the Data Processing Team",
 )
 def convert_pipeline(

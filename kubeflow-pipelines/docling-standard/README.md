@@ -2,22 +2,23 @@
 
 ## Running the demo pipeline directly
 
-Assuming you have a working Kubeflow Pipelines installation, download [docling_convert_pipeline_compiled.yaml](docling_convert_pipeline_compiled.yaml) and the upload it to your Kubeflow Pipelines UI or via the CLI. Then, start a run of that pipeline to see the conversion process happen.
+Assuming you have a working Kubeflow Pipelines installation, download [docling_convert_pipeline_compiled.yaml](docling_convert_pipeline_compiled.yaml) and then upload it to your Kubeflow Pipelines UI or via the CLI. Then, start a run of that pipeline to see the conversion process happen.
 
 ## Modifying and running from source locally
 
 ### Clone repository, create venv, install dependencies
 
-```
-git clone https://github.com/fabianofranz/docling-kfp-demo
-cd docling-kfp-demo
+```bash
+git clone https://github.com/opendatahub-io/odh-data-processing.git
+cd odh-data-processing/kubeflow-pipelines/docling-standard
+python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 ```
 
 ### Compile the kubeflow pipeline
 
-```
+```bash
 python docling_convert_pipeline.py
 ```
 

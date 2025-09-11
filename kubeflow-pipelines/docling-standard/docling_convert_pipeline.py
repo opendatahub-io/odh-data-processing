@@ -8,7 +8,7 @@ from docling_convert_components import (
 )
 
 @dsl.pipeline(
-    name= "data-processing-docling-pipeline",
+    name= "data-processing-docling-standard-pipeline",
     description= "Docling convert pipeline by the Data Processing Team",
 )
 def convert_pipeline(
@@ -29,10 +29,6 @@ def convert_pipeline(
     docling_table_mode: str = "accurate",
     docling_num_threads: int = 4,
     docling_timeout_per_document: int = 300,
-    docling_remote_model_enabled: bool = False,
-    docling_remote_model_endpoint_url: str = "",
-    docling_remote_model_api_key: str = "",
-    docling_remote_model_name: str = "",
     docling_ocr: bool = True,
     docling_force_ocr: bool = False,
     docling_ocr_engine: str = "easyocr",
@@ -72,10 +68,6 @@ def convert_pipeline(
             table_mode=docling_table_mode,
             num_threads=docling_num_threads,
             timeout_per_document=docling_timeout_per_document,
-            remote_model_enabled=docling_remote_model_enabled,
-            remote_model_endpoint_url=docling_remote_model_endpoint_url,
-            remote_model_api_key=docling_remote_model_api_key,
-            remote_model_name=docling_remote_model_name,
             ocr=docling_ocr,
             force_ocr=docling_force_ocr,
             ocr_engine=docling_ocr_engine,
