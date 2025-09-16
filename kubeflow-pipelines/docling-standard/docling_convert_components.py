@@ -15,11 +15,7 @@ def import_pdfs(
     filenames: str,
     base_url: str,
     from_s3: bool = False,
-    s3_endpoint: str = "",
-    s3_access_key: str = "",
-    s3_secret_key: str = "",
-    s3_bucket: str = "",
-    s3_prefix: str = "",
+    s3_secret_mount_path: str = "/mnt/secrets",
 ):
     """
     Import PDF filenames (comma-separated) from specified URL or S3 bucket.
@@ -29,13 +25,11 @@ def import_pdfs(
         base_url: Base URL of the PDF files.
         output_path: Path to the output directory for the PDF files.
         from_s3: Whether or not to import from S3.
-        s3_endpoint: S3 endpoint of the PDF files.
-        s3_access_key: S3 access key of the PDF files.
-        s3_secret_key: S3 secret key of the PDF files.
-        s3_bucket: S3 bucket of the PDF files.
-        s3_prefix: S3 prefix of the PDF files.
+        s3_secret_mount_path: Path to the secret mount path for the S3 credentials.
     """
+    
     import boto3 # pylint: disable=import-outside-toplevel
+    import os # pylint: disable=import-outside-toplevel
     from pathlib import Path # pylint: disable=import-outside-toplevel
     import requests # pylint: disable=import-outside-toplevel
 
@@ -47,15 +41,58 @@ def import_pdfs(
     output_path_p.mkdir(parents=True, exist_ok=True)
         
     if from_s3:
-        if not s3_endpoint:
-            raise ValueError("s3_endpoint must be provided")
+        if not os.path.exists(s3_secret_mount_path):
+            raise ValueError(f"Secret for S3 should be mounted in {s3_secret_mount_path}")
+
+        s3_endpoint_url_secret = "S3_ENDPOINT_URL"
+        s3_endpoint_url_file_path = os.path.join(s3_secret_mount_path, s3_endpoint_url_secret)
+        if os.path.isfile(s3_endpoint_url_file_path):
+            with open(s3_endpoint_url_file_path) as f:
+                s3_endpoint_url = f.read()
+        else:
+            raise ValueError(f"Key {s3_endpoint_url_secret} not defined in secret {s3_secret_mount_path}")
+
+        s3_access_key_secret = "S3_ACCESS_KEY"
+        s3_access_key_file_path = os.path.join(s3_secret_mount_path, s3_access_key_secret)
+        if os.path.isfile(s3_access_key_file_path):
+            with open(s3_access_key_file_path) as f:
+                s3_access_key = f.read()
+        else:
+            raise ValueError(f"Key {s3_access_key_secret} not defined in secret {s3_secret_mount_path}")
+
+        s3_secret_key_secret = "S3_SECRET_KEY"
+        s3_secret_key_file_path = os.path.join(s3_secret_mount_path, s3_secret_key_secret)
+        if os.path.isfile(s3_secret_key_file_path):
+            with open(s3_secret_key_file_path) as f:
+                s3_secret_key = f.read()
+        else:
+            raise ValueError(f"Key {s3_secret_key_secret} not defined in secret {s3_secret_mount_path}")
+
+        s3_bucket_secret = "S3_BUCKET"
+        s3_bucket_file_path = os.path.join(s3_secret_mount_path, s3_bucket_secret)
+        if os.path.isfile(s3_bucket_file_path):
+            with open(s3_bucket_file_path) as f:
+                s3_bucket = f.read()
+        else:
+            raise ValueError(f"Key {s3_bucket_secret} not defined in secret {s3_secret_mount_path}")
+
+        s3_prefix_secret = "S3_PREFIX"
+        s3_prefix_file_path = os.path.join(s3_secret_mount_path, s3_prefix_secret)
+        if os.path.isfile(s3_prefix_file_path):
+            with open(s3_prefix_file_path) as f:
+                s3_prefix = f.read()
+        else:
+            raise ValueError(f"Key {s3_prefix_secret} not defined in secret {s3_secret_mount_path}")
+
+        if not s3_endpoint_url:
+            raise ValueError("S3_ENDPOINT_URL must be provided")
 
         if not s3_bucket:
-            raise ValueError("s3_bucket must be provided")
+            raise ValueError("S3_BUCKET must be provided")
 
         s3_client = boto3.client(
             's3',
-            endpoint_url=s3_endpoint,
+            endpoint_url=s3_endpoint_url,
             aws_access_key_id=s3_access_key,
             aws_secret_access_key=s3_secret_key,
         )

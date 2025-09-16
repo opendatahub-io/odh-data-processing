@@ -19,11 +19,6 @@
 #    pdf_base_url: str [Default: 'https://github.com/docling-project/docling/raw/v2.43.0/tests/data/pdf']
 #    pdf_filenames: str [Default: '2203.01017v2.pdf,2206.01062.pdf,2305.03393v1-pg9.pdf,2305.03393v1.pdf,amt_handbook_sample.pdf,code_and_formula.pdf,multi_page.pdf,redp5110_sampled.pdf']
 #    pdf_from_s3: bool [Default: False]
-#    pdf_s3_access_key: str [Default: 'REDACTED']
-#    pdf_s3_bucket: str [Default: 'my-bucket']
-#    pdf_s3_endpoint: str [Default: 'https://s3.us-east-2.amazonaws.com']
-#    pdf_s3_prefix: str [Default: 'my-pdfs']
-#    pdf_s3_secret_key: str [Default: 'REDACTED']
 components:
   comp-create-pdf-splits:
     executorLabel: exec-create-pdf-splits
@@ -239,29 +234,9 @@ components:
           description: Whether or not to import from S3.
           isOptional: true
           parameterType: BOOLEAN
-        s3_access_key:
-          defaultValue: ''
-          description: S3 access key of the PDF files.
-          isOptional: true
-          parameterType: STRING
-        s3_bucket:
-          defaultValue: ''
-          description: S3 bucket of the PDF files.
-          isOptional: true
-          parameterType: STRING
-        s3_endpoint:
-          defaultValue: ''
-          description: S3 endpoint of the PDF files.
-          isOptional: true
-          parameterType: STRING
-        s3_prefix:
-          defaultValue: ''
-          description: S3 prefix of the PDF files.
-          isOptional: true
-          parameterType: STRING
-        s3_secret_key:
-          defaultValue: ''
-          description: S3 secret key of the PDF files.
+        s3_secret_mount_path:
+          defaultValue: /mnt/secrets
+          description: Path to the secret mount path for the S3 credentials.
           isOptional: true
           parameterType: STRING
     outputDefinitions:
@@ -284,7 +259,7 @@ deploymentSpec:
         - -c
         - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
           \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
-          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.13.0'\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.14.3'\
           \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
           $0\" \"$@\"\n"
         - sh
@@ -320,7 +295,7 @@ deploymentSpec:
         - -c
         - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
           \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
-          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.13.0'\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.14.3'\
           \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
           $0\" \"$@\"\n"
         - sh
@@ -456,7 +431,7 @@ deploymentSpec:
         - -c
         - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
           \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
-          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.13.0'\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.14.3'\
           \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
           $0\" \"$@\"\n"
         - sh
@@ -492,10 +467,10 @@ deploymentSpec:
         - -c
         - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
           \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
-          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.13.0'\
-          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"'  &&\
-          \  python3 -m pip install --quiet --no-warn-script-location 'boto3' 'requests'\
-          \ && \"$0\" \"$@\"\n"
+          \ python3 -m pip install --quiet --no-warn-script-location 'boto3' 'requests'\
+          \  &&  python3 -m pip install --quiet --no-warn-script-location 'kfp==2.14.3'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
+          $0\" \"$@\"\n"
         - sh
         - -ec
         - 'program_path=$(mktemp -d)
@@ -509,27 +484,52 @@ deploymentSpec:
         - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
           \ *\n\ndef import_pdfs(\n    output_path: dsl.Output[dsl.Artifact],\n  \
           \  filenames: str,\n    base_url: str,\n    from_s3: bool = False,\n   \
-          \ s3_endpoint: str = \"\",\n    s3_access_key: str = \"\",\n    s3_secret_key:\
-          \ str = \"\",\n    s3_bucket: str = \"\",\n    s3_prefix: str = \"\",\n\
-          ):\n    \"\"\"\n    Import PDF filenames (comma-separated) from specified\
-          \ URL or S3 bucket.\n\n    Args:\n        filenames: List of PDF filenames\
-          \ to import.\n        base_url: Base URL of the PDF files.\n        output_path:\
-          \ Path to the output directory for the PDF files.\n        from_s3: Whether\
-          \ or not to import from S3.\n        s3_endpoint: S3 endpoint of the PDF\
-          \ files.\n        s3_access_key: S3 access key of the PDF files.\n     \
-          \   s3_secret_key: S3 secret key of the PDF files.\n        s3_bucket: S3\
-          \ bucket of the PDF files.\n        s3_prefix: S3 prefix of the PDF files.\n\
-          \    \"\"\"\n    import boto3 # pylint: disable=import-outside-toplevel\n\
+          \ s3_secret_mount_path: str = \"/mnt/secrets\",\n):\n    \"\"\"\n    Import\
+          \ PDF filenames (comma-separated) from specified URL or S3 bucket.\n\n \
+          \   Args:\n        filenames: List of PDF filenames to import.\n       \
+          \ base_url: Base URL of the PDF files.\n        output_path: Path to the\
+          \ output directory for the PDF files.\n        from_s3: Whether or not to\
+          \ import from S3.\n        s3_secret_mount_path: Path to the secret mount\
+          \ path for the S3 credentials.\n    \"\"\"\n\n    import boto3 # pylint:\
+          \ disable=import-outside-toplevel\n    import os # pylint: disable=import-outside-toplevel\n\
           \    from pathlib import Path # pylint: disable=import-outside-toplevel\n\
           \    import requests # pylint: disable=import-outside-toplevel\n\n    filenames_list\
           \ = [name.strip() for name in filenames.split(\",\") if name.strip()]\n\
           \    if not filenames_list:\n        raise ValueError(\"filenames must contain\
           \ at least one filename (comma-separated)\")\n\n    output_path_p = Path(output_path.path)\n\
           \    output_path_p.mkdir(parents=True, exist_ok=True)\n\n    if from_s3:\n\
-          \        if not s3_endpoint:\n            raise ValueError(\"s3_endpoint\
-          \ must be provided\")\n\n        if not s3_bucket:\n            raise ValueError(\"\
-          s3_bucket must be provided\")\n\n        s3_client = boto3.client(\n   \
-          \         's3',\n            endpoint_url=s3_endpoint,\n            aws_access_key_id=s3_access_key,\n\
+          \        if not os.path.exists(s3_secret_mount_path):\n            raise\
+          \ ValueError(f\"Secret for S3 should be mounted in {s3_secret_mount_path}\"\
+          )\n\n        s3_endpoint_url_secret = \"S3_ENDPOINT_URL\"\n        s3_endpoint_url_file_path\
+          \ = os.path.join(s3_secret_mount_path, s3_endpoint_url_secret)\n       \
+          \ if os.path.isfile(s3_endpoint_url_file_path):\n            with open(s3_endpoint_url_file_path)\
+          \ as f:\n                s3_endpoint_url = f.read()\n        else:\n   \
+          \         raise ValueError(f\"Key {s3_endpoint_url_secret} not defined in\
+          \ secret {s3_secret_mount_path}\")\n\n        s3_access_key_secret = \"\
+          S3_ACCESS_KEY\"\n        s3_access_key_file_path = os.path.join(s3_secret_mount_path,\
+          \ s3_access_key_secret)\n        if os.path.isfile(s3_access_key_file_path):\n\
+          \            with open(s3_access_key_file_path) as f:\n                s3_access_key\
+          \ = f.read()\n        else:\n            raise ValueError(f\"Key {s3_access_key_secret}\
+          \ not defined in secret {s3_secret_mount_path}\")\n\n        s3_secret_key_secret\
+          \ = \"S3_SECRET_KEY\"\n        s3_secret_key_file_path = os.path.join(s3_secret_mount_path,\
+          \ s3_secret_key_secret)\n        if os.path.isfile(s3_secret_key_file_path):\n\
+          \            with open(s3_secret_key_file_path) as f:\n                s3_secret_key\
+          \ = f.read()\n        else:\n            raise ValueError(f\"Key {s3_secret_key_secret}\
+          \ not defined in secret {s3_secret_mount_path}\")\n\n        s3_bucket_secret\
+          \ = \"S3_BUCKET\"\n        s3_bucket_file_path = os.path.join(s3_secret_mount_path,\
+          \ s3_bucket_secret)\n        if os.path.isfile(s3_bucket_file_path):\n \
+          \           with open(s3_bucket_file_path) as f:\n                s3_bucket\
+          \ = f.read()\n        else:\n            raise ValueError(f\"Key {s3_bucket_secret}\
+          \ not defined in secret {s3_secret_mount_path}\")\n\n        s3_prefix_secret\
+          \ = \"S3_PREFIX\"\n        s3_prefix_file_path = os.path.join(s3_secret_mount_path,\
+          \ s3_prefix_secret)\n        if os.path.isfile(s3_prefix_file_path):\n \
+          \           with open(s3_prefix_file_path) as f:\n                s3_prefix\
+          \ = f.read()\n        else:\n            raise ValueError(f\"Key {s3_prefix_secret}\
+          \ not defined in secret {s3_secret_mount_path}\")\n\n        if not s3_endpoint_url:\n\
+          \            raise ValueError(\"S3_ENDPOINT_URL must be provided\")\n\n\
+          \        if not s3_bucket:\n            raise ValueError(\"S3_BUCKET must\
+          \ be provided\")\n\n        s3_client = boto3.client(\n            's3',\n\
+          \            endpoint_url=s3_endpoint_url,\n            aws_access_key_id=s3_access_key,\n\
           \            aws_secret_access_key=s3_secret_key,\n        )\n\n       \
           \ for filename in filenames_list:\n            orig = f\"{s3_prefix.rstrip('/')}/{filename.lstrip('/')}\"\
           \n            dest = output_path_p / filename\n            print(f\"import-test-pdfs:\
@@ -641,16 +641,9 @@ root:
               componentInputParameter: pdf_filenames
             from_s3:
               componentInputParameter: pdf_from_s3
-            s3_access_key:
-              componentInputParameter: pdf_s3_access_key
-            s3_bucket:
-              componentInputParameter: pdf_s3_bucket
-            s3_endpoint:
-              componentInputParameter: pdf_s3_endpoint
-            s3_prefix:
-              componentInputParameter: pdf_s3_prefix
-            s3_secret_key:
-              componentInputParameter: pdf_s3_secret_key
+            s3_secret_mount_path:
+              runtimeValue:
+                constant: /mnt/secrets
         taskInfo:
           name: import-pdfs
   inputDefinitions:
@@ -723,25 +716,18 @@ root:
         defaultValue: false
         isOptional: true
         parameterType: BOOLEAN
-      pdf_s3_access_key:
-        defaultValue: REDACTED
-        isOptional: true
-        parameterType: STRING
-      pdf_s3_bucket:
-        defaultValue: my-bucket
-        isOptional: true
-        parameterType: STRING
-      pdf_s3_endpoint:
-        defaultValue: https://s3.us-east-2.amazonaws.com
-        isOptional: true
-        parameterType: STRING
-      pdf_s3_prefix:
-        defaultValue: my-pdfs
-        isOptional: true
-        parameterType: STRING
-      pdf_s3_secret_key:
-        defaultValue: REDACTED
-        isOptional: true
-        parameterType: STRING
 schemaVersion: 2.1.0
-sdkVersion: kfp-2.13.0
+sdkVersion: kfp-2.14.3
+---
+platforms:
+  kubernetes:
+    deploymentSpec:
+      executors:
+        exec-import-pdfs:
+          secretAsVolume:
+          - mountPath: /mnt/secrets
+            optional: true
+            secretName: data-processing-docling-pipeline
+            secretNameParameter:
+              runtimeValue:
+                constant: data-processing-docling-pipeline
