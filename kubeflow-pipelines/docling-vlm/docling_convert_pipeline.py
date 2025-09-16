@@ -22,9 +22,6 @@ def convert_pipeline(
     docling_timeout_per_document: int = 300,
     docling_image_export_mode: str = "embedded",
     docling_remote_model_enabled: bool = False,
-    docling_remote_model_endpoint_url: str = "",
-    docling_remote_model_api_key: str = "",
-    docling_remote_model_name: str = "",
 ):
     from kfp import kubernetes # pylint: disable=import-outside-toplevel
 
@@ -50,6 +47,7 @@ def convert_pipeline(
     artifacts.set_caching_options(False)
 
     with dsl.ParallelFor(pdf_splits.output) as pdf_split:
+        remote_model_secret_mount_path = "/mnt/secrets"
         converter = docling_convert(
             input_path=importer.outputs["output_path"],
             artifacts_path=artifacts.outputs["output_path"],
@@ -58,15 +56,17 @@ def convert_pipeline(
             timeout_per_document=docling_timeout_per_document,
             image_export_mode=docling_image_export_mode,
             remote_model_enabled=docling_remote_model_enabled,
-            remote_model_endpoint_url=docling_remote_model_endpoint_url,
-            remote_model_api_key=docling_remote_model_api_key,
-            remote_model_name=docling_remote_model_name,
+            remote_model_secret_mount_path=remote_model_secret_mount_path,
         )
         converter.set_caching_options(False)
         converter.set_memory_request("1G")
         converter.set_memory_limit("6G")
         converter.set_cpu_request("500m")
         converter.set_cpu_limit("4")
+        kubernetes.use_secret_as_volume(converter,
+            secret_name="data-processing-docling-pipeline",
+            mount_path=remote_model_secret_mount_path,
+            optional=True)
 
 
 if __name__ == "__main__":
