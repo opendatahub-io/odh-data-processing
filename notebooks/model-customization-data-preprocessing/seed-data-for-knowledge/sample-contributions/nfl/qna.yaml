@@ -1,0 +1,103 @@
+domain: Sports Rules
+document_outline: Official playing rules of the National Football League 2022, 2023
+seed_examples:
+  - context: "\nA.R. 15.260 Line to gain on fourth down. Fourth-and-2 on B41. \nWith\
+      \ 3:43 remaining in the fourth quarter, back A2 takes a handoff and runs to\
+      \ the B39 where he is hit and driven backward.\nThe officials spot the ball\
+      \ at the B39 and award possession to Team B.\nRuling: Reviewable. A's ball first-and-10\
+      \ on B39, and wind on the ready.\nTeam A coach must challenge this play outside\
+      \ two minutes of either half.\nReplay Official is not responsible for initiating\
+      \ a review for a turnover on downs for plays that start before the two-minute\
+      \ warning.\n"
+    questions_and_answers:
+      - question: What is the distance Team A needs to gain on fourth down?
+        answer: Team A needs to gain 2 yards on fourth down.
+      - question: |2-
+           What is the final spot of the ball and the team that is awarded possession
+          after the play?
+        answer: The ball is spotted at the B39 and Team B is awarded possession.
+      - question: Why might the Team A coach choose to challenge the play?
+        answer: |2-
+           The coach might choose to challenge the play because it results in a turnover
+          on downs, which is reviewable, and the replay official will not initiate a
+          review for such plays that start before the two-minute warning.
+  - context: |-
+      A.R. 15.266 UNR/UNS enforcement
+      First-and-10 on A30. QBA1 throws a low pass that is ruled intercepted by B2 at the A43-yard line. B2 returns the ball to the A10yard line where he is tackled by the facemask by A3. Replays show that the ball hit the ground before B2 intercepted it.
+      Ruling: Reviewable. A's ball second-and-25 on A15, reset the clock to the time when the ball hit the ground. Pass is incomplete but the facemask penalty must be enforced. This applies to any UNR or UNS foul, and it is enforced as a dead ball penalty. Only the Replay Official can initiate a review of this play.
+    questions_and_answers:
+      - question: What was the initial ruling on the play involving QBA1's pass and
+          B2?
+        answer: The initial ruling was that B2 intercepted the pass at the A43-yard
+          line.
+      - question: What did the replay show regarding the interception?
+        answer: The replay showed that the ball hit the ground before B2 intercepted
+          it.
+      - question: What is the ruling after the replay review and what penalties are
+          enforced?
+        answer: |-
+          The ruling after the replay review is that the pass is incomplete, and the
+          facemask penalty must be enforced. The ball is placed at second-and-25 on A15,
+          and the clock is reset to the time when the ball hit the ground. This applies to
+          any UNR or UNS foul and is enforced as a dead ball penalty.
+  - context: |-
+      A.R. 15.264        Try
+      First-and-10 on B15. At the start of the play there is 2:02 remaining in the second quarter. A2 catches a pass in the end zone that is ruled a TD with 1:53 left on the clock. Team A then attempts a two-point conversion and QBA1 is ruled down short of the goal line. Replays show that the ball broke the plane before he was down.
+      Ruling: Reviewable, two-point conversion is good, KO A35. Only the Replay Official can initiate a review of a Try, whether successful or unsuccessful.
+    questions_and_answers:
+      - question: What was the time remaining in the second quarter when the play
+          started?
+        answer: 2:02 remaining in the second quarter.
+      - question: What was the outcome of the two-point conversion attempt after the
+          touchdown?
+        answer: |-
+          The two-point conversion was good after review showed the ball broke the plane
+          before QBA1 was down.
+      - question: Who can initiate a review of a Try in this scenario?
+        answer: Only the Replay Official can initiate a review of a Try.
+  - context: |-
+      A.R. 15.267        UNR/UNS enforcement with a double foul
+      First-and-10 on A30. QBA1 throws a low pass that is ruled intercepted by B2 at the A43-yard line. B2 returns the ball to the A10yard line. During the return, B4 blocked A5 low at the A23-yard line. Replays show that the ball hit the ground before B2 intercepted it. Team A was in an illegal formation at the snap.
+      Ruling: Reviewable. A's ball, first-and-10 on A45. Pass is incomplete, reset the clock to the time when the ball hit the ground and the low block must be enforced. It combines with the live ball illegal formation to create a 5-15 enforcement. Only the Replay Official can initiate a review of this play.
+    questions_and_answers:
+      - question: |-
+          What was the initial ruling on the play involving QBA1's pass and B2's
+          interception?
+        answer: |-
+          The initial ruling was that QBA1's low pass was intercepted by B2 at the
+          A43-yard line.
+      - question: What did replays reveal about the interception by B2?
+        answer: Replays showed that the ball hit the ground before B2 intercepted
+          it.
+      - question: What is the final ruling after the review of the play?
+        answer: |-
+          The final ruling is that it is Team A's ball, first-and-10 on A45. The pass is
+          incomplete, the clock is reset to the time when the ball hit the ground, and the
+          low block must be enforced. This combines with the live ball illegal formation
+          to create a 5-15 enforcement.
+  - context: |-
+      PREFACE
+      This edition of the Official Playing Rules of the  National Football League  contains all current rules governing the playing of professional football that are in effect for the 2022 NFL season. Member clubs of the League may amend the rules from time to time, pursuant to the applicable voting procedures of the NFL Constitution and Bylaws.
+      Any intra-League dispute or call for interpretation in connection with these rules will be decided by the Commissioner of the League, whose ruling will be final.
+      Because inter-conference games are played throughout the preseason, regular season, and postseason in  the  NFL, all  rules contained in  this  book apply uniformly to both the American and National Football Conferences.
+      Where the word 'illegal' appears in this rule book, it is an institutional term of art pertaining strictly to actions that violate NFL playing rules. It is not meant to connote illegality under any public law or the rules or regulations of any other organization.
+    questions_and_answers:
+      - question: What does the term 'illegal' refer to in the context of the NFL
+          rule book?
+        answer: |-
+          In the context of the NFL rule book, the term 'illegal' refers to actions that
+          violate NFL playing rules. It is an institutional term of art and does not imply
+          illegality under any public law or the rules or regulations of any other
+          organization.
+      - question: |-
+          Who has the final authority to decide any intra-League disputes or calls for
+          interpretation of the NFL rules?
+        answer: |-
+          The Commissioner of the League has the final authority to decide any intra-
+          League disputes or calls for interpretation of the NFL rules.
+      - question: |-
+          Do the rules in the Official Playing Rules of the NFL apply uniformly to both
+          the American and National Football Conferences?
+        answer: |-
+          Yes, all rules contained in the Official Playing Rules of the NFL apply
+          uniformly to both the American and National Football Conferences.
