@@ -1,7 +1,5 @@
 # SubsetSelection
 
-**Intelligent subset selection for large datasets using submodular optimization**
-
 SubsetSelection is a sophisticated data curation toolkit designed for Large Language Models (LLMs). It enables efficient training by reducing dataset size without significant loss of information, leveraging advanced embedding techniques and submodular optimization.
 
 ## **Overview**
@@ -33,12 +31,12 @@ The core goal is to **enable efficient training by reducing dataset size without
 
 ```bash
 # Clone the repository
-git clone https://github.com/RobuRishabh/SubsetSelection.git
-cd SubsetSelection
+git clone https://github.com/opendatahub-io/odh-data-processing.git
+cd scripts/SubsetSelection
 
 # Create virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+python -m venv .venv
+source .venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Install dependencies
 pip install -r requirements.txt
@@ -210,9 +208,7 @@ SubsetSelection/
 │ └── utils/ # Utility functions
 │   └── compute_pairwise_similarity.py # Similarity computation
 ├── requirements.txt # Dependencies
-├── README.md # This file
-└── LICENSE # License file
-└── Run.md # Common run commands
+└── README.md # This file
 ```
 
 
@@ -264,82 +260,13 @@ output/
 └── dataset_name_fl_5_partitions_percent_5.0_metadata.npz # Metadata
 ```
 
-## **Troubleshooting**
 
-### **Common Issues**
+## **Attribution**
 
-#### **"integer division or modulo by zero"**
-- **Cause**: GPU detection issues
-- **Solution**: The script has been fixed to handle this automatically
+This SubsetSelection toolkit is based on original work by [Krishnateja Killamsetty](https://github.com/krishnatejakk). The code has been adapted and integrated into the ODH data processing pipeline.
 
-#### **Out of Memory Errors**
-- **Solution**: Reduce `batch_size` in config file
-- **Example**: Change from 100000 to 50000 or 10000
+**Original Repository**: [https://github.com/krishnatejakk/DataCurate4LLMs.git](https://github.com/krishnatejakk/DataCurate4LLMs.git)
 
-#### **Slow Processing**
-- **Solution**: Reduce `num_folds` for small datasets
-- **Example**: Use `num_folds: 1` for datasets < 1000 samples
-
-#### **Import Errors**
-- **Solution**: Ensure all dependencies are installed
-```bash
-pip install -r requirements.txt
-```
-
-### **Performance Optimization**
-
-#### **For Small Datasets (<1000 samples)**
-```json
-{
-  "num_folds": 1,
-  "batch_size": 10000,
-  "epsilon": 1.0
-}
-```
-
-#### **For Large Datasets (>100K samples)**
-```json
-{
-  "num_folds": 25,
-  "batch_size": 100000,
-  "epsilon": 160
-}
-```
-
-## **Technical Details**
-
-### **Algorithm**
-- **Submodular Optimization**: Uses Facility Location function
-- **Optimizer**: LazierThanLazyGreedy for efficiency
-- **Similarity Metric**: Cosine similarity with additive scaling
-- **Embedding Models**: Support for 8+ different encoders
-
-### **Hardware Requirements**
-- **CPU**: Multi-core recommended for parallel processing
-- **Memory**: 8GB+ RAM recommended
-- **GPU**: Optional but recommended for large datasets
-- **Storage**: Sufficient space for embeddings and output files
-
-### **Data Format Support**
-- **JSONL**: Primary format (recommended)
-- **JSON**: Single JSON files
-- **CSV**: Comma-separated values
-- **Parquet**: Columnar format
-
-## **License**
-
-This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
-
-## **Contributing**
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## **Support**
-
-If you encounter any issues or have questions, please:
-1. Check the troubleshooting section above
-2. Review the configuration examples
-3. Open an issue in the repository
 
 ---
 
