@@ -210,9 +210,7 @@ def docling_convert(
     image_export_mode: str = "embedded",
     timeout_per_document: int = 300,
     remote_model_enabled: bool = False,
-    remote_model_endpoint_url: str = "",
-    remote_model_api_key: str = "",
-    remote_model_name: str = "",
+    remote_model_secret_mount_path: str = "/mnt/secrets",
 ):
     """
     Convert a list of PDF files to JSON and Markdown using Docling.
@@ -228,9 +226,7 @@ def docling_convert(
         num_threads: Number of threads to use per document processing.
         timeout_per_document: Timeout per document processing.
         remote_model_enabled: Whether or not to use a remote model.
-        remote_model_endpoint_url: URL of the remote model.
-        remote_model_api_key: API key or token for the remote model.
-        remote_model_name: Name of the remote model.
+        remote_model_secret_mount_path: Path to the remote model secret mount path.
     """
     import os
     from importlib import import_module
@@ -264,6 +260,33 @@ def docling_convert(
         )
 
     if remote_model_enabled:
+        if not os.path.exists(remote_model_secret_mount_path):
+            raise ValueError(f"Secret for remote model should be mounted in {remote_model_secret_mount_path}")
+
+        remote_model_endpoint_url_secret = "REMOTE_MODEL_ENDPOINT_URL"
+        remote_model_endpoint_url_file_path = os.path.join(remote_model_secret_mount_path, remote_model_endpoint_url_secret)
+        if os.path.isfile(remote_model_endpoint_url_file_path):
+            with open(remote_model_endpoint_url_file_path) as f:
+                remote_model_endpoint_url = f.read()
+        else:
+            raise ValueError(f"Key {remote_model_endpoint_url_secret} not defined in secret {remote_model_secret_mount_path}")
+
+        remote_model_name_secret = "REMOTE_MODEL_NAME"
+        remote_model_name_file_path = os.path.join(remote_model_secret_mount_path, remote_model_name_secret)
+        if os.path.isfile(remote_model_name_file_path):
+            with open(remote_model_name_file_path) as f:
+                remote_model_name = f.read()
+        else:
+            raise ValueError(f"Key {remote_model_name_secret} not defined in secret {remote_model_secret_mount_path}")
+
+        remote_model_api_key_secret = "REMOTE_MODEL_API_KEY"
+        remote_model_api_key_file_path = os.path.join(remote_model_secret_mount_path, remote_model_api_key_secret)
+        if os.path.isfile(remote_model_api_key_file_path):
+            with open(remote_model_api_key_file_path) as f:
+                remote_model_api_key = f.read()
+        else:
+            raise ValueError(f"Key {remote_model_api_key_secret} not defined in secret {remote_model_secret_mount_path}")
+
         if not remote_model_endpoint_url:
             raise ValueError("remote_model_endpoint_url must be provided when remote_model_enabled is True")
 
@@ -279,9 +302,8 @@ def docling_convert(
                 ),
             ),
             prompt="OCR the full page to markdown.",
-            timeout=360,
+            timeout=600,
             response_format=ResponseFormat.MARKDOWN,
-            # TODO: remote_model_api_key should be something other than a KFP param (maybe a secret?), so it's not exposed in the UI
             headers={
                 "Authorization": f"Bearer {remote_model_api_key}",
             },
