@@ -187,7 +187,7 @@ def docling_convert(
     timeout_per_document: int = 300,
     ocr: bool = True,
     force_ocr: bool = False,
-    ocr_engine: str = "easyocr",
+    ocr_engine: str = "tesseract",
     allow_external_plugins: bool = False,
     enrich_code: bool = False,
     enrich_formula: bool = False,
