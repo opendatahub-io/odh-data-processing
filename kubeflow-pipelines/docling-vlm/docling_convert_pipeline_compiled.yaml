@@ -322,7 +322,7 @@ deploymentSpec:
           \    print(f\"docling-convert: saving {output_md_path}\", flush=True)\n\
           \        result.document.save_as_markdown(output_md_path, image_mode=ImageRefMode(image_export_mode))\n\
           \n    print(\"docling-convert: done\", flush=True)\n\n"
-        image: quay.io/fabianofranz/docling-ubi9:2.45.0
+        image: quay.io/fabianofranz/docling-ubi9:2.54.0
         resources:
           cpuLimit: 4.0
           cpuRequest: 0.5
@@ -382,7 +382,7 @@ deploymentSpec:
           \            with_picture_classifier=False,\n            with_smoldocling_mlx=False,\n\
           \            with_granite_vision=False,\n            with_easyocr=False,\n\
           \        )\n\n"
-        image: quay.io/fabianofranz/docling-ubi9:2.45.0
+        image: quay.io/fabianofranz/docling-ubi9:2.54.0
     exec-import-pdfs:
       container:
         args:
