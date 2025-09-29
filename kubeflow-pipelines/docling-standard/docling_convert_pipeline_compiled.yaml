@@ -397,19 +397,16 @@ deploymentSpec:
           \ class_name)\n\n    doc_converter = DocumentConverter(\n        format_options={\n\
           \            InputFormat.PDF: PdfFormatOption(\n                pipeline_options=pipeline_options,\n\
           \                backend=backend_class,\n                pipeline_cls=StandardPdfPipeline,\n\
-          \            )\n        }\n    )\n\n    easyocr_path_p = artifacts_path_p\
-          \ / \"EasyOcr\"\n    os.environ[\"MODULE_PATH\"] = str(easyocr_path_p)\n\
-          \    os.environ[\"EASYOCR_MODULE_PATH\"] = str(easyocr_path_p)\n\n    results\
-          \ = doc_converter.convert_all(input_pdfs, raises_on_error=True)\n\n    for\
-          \ result in results:\n        doc_filename = result.input.file.stem\n\n\
-          \        output_json_path = output_path_p / f\"{doc_filename}.json\"\n \
-          \       print(f\"docling-convert: saving {output_json_path}\", flush=True)\n\
-          \        result.document.save_as_json(output_json_path, image_mode=ImageRefMode(image_export_mode))\n\
+          \            )\n        }\n    )\n\n    results = doc_converter.convert_all(input_pdfs,\
+          \ raises_on_error=True)\n\n    for result in results:\n        doc_filename\
+          \ = result.input.file.stem\n\n        output_json_path = output_path_p /\
+          \ f\"{doc_filename}.json\"\n        print(f\"docling-convert: saving {output_json_path}\"\
+          , flush=True)\n        result.document.save_as_json(output_json_path, image_mode=ImageRefMode(image_export_mode))\n\
           \n        output_md_path = output_path_p / f\"{doc_filename}.md\"\n    \
           \    print(f\"docling-convert: saving {output_md_path}\", flush=True)\n\
           \        result.document.save_as_markdown(output_md_path, image_mode=ImageRefMode(image_export_mode))\n\
           \n    print(\"docling-convert: done\", flush=True)\n\n"
-        image: quay.io/fabianofranz/docling-ubi9:2.45.0
+        image: quay.io/fabianofranz/docling-ubi9:2.54.0
         resources:
           cpuLimit: 4.0
           cpuRequest: 0.5
@@ -453,8 +450,8 @@ deploymentSpec:
           \n    output_path_p = Path(output_path.path)\n\n    output_path_p.mkdir(parents=True,\
           \ exist_ok=True)\n\n    download_models(\n        output_dir=output_path_p,\n\
           \        progress=True,\n        with_layout=True,\n        with_tableformer=True,\n\
-          \        with_easyocr=True,\n    )\n\n"
-        image: quay.io/fabianofranz/docling-ubi9:2.45.0
+          \        with_easyocr=False,\n    )\n\n"
+        image: quay.io/fabianofranz/docling-ubi9:2.54.0
     exec-import-pdfs:
       container:
         args:

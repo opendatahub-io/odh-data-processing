@@ -3,7 +3,7 @@ from typing import List
 from kfp import dsl
 
 PYTHON_BASE_IMAGE = "registry.access.redhat.com/ubi9/python-311:9.6-1755074620"
-DOCLING_BASE_IMAGE = "quay.io/fabianofranz/docling-ubi9:2.45.0"
+DOCLING_BASE_IMAGE = "quay.io/fabianofranz/docling-ubi9:2.54.0"
 
 
 @dsl.component(
@@ -168,7 +168,7 @@ def download_docling_models(
         progress=True,
         with_layout=True,
         with_tableformer=True,
-        with_easyocr=True,
+        with_easyocr=False,
     )
 
 
@@ -333,10 +333,6 @@ def docling_convert(
             )
         }
     )
-
-    easyocr_path_p = artifacts_path_p / "EasyOcr"
-    os.environ["MODULE_PATH"] = str(easyocr_path_p)
-    os.environ["EASYOCR_MODULE_PATH"] = str(easyocr_path_p)
 
     results = doc_converter.convert_all(input_pdfs, raises_on_error=True)
 
