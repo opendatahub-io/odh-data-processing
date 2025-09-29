@@ -1,10 +1,18 @@
+import sys
+from pathlib import Path
+
+# Add the parent directory to Python path to find common_components
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 from kfp import dsl, compiler
 
-from docling_convert_components import (
+# Import common components from the shared module
+from common_components import (
     import_pdfs,
     create_pdf_splits,
     download_docling_models,
-    docling_convert,
+    docling_convert_vlm,
+    MODEL_TYPE_VLM,
 )
 
 @dsl.pipeline(
@@ -43,12 +51,15 @@ def convert_pipeline(
         num_splits=num_splits,
     )
 
-    artifacts = download_docling_models(remote_model_endpoint_enabled=docling_remote_model_enabled)
+    artifacts = download_docling_models(
+        pipeline_type=MODEL_TYPE_VLM,
+        remote_model_endpoint_enabled=docling_remote_model_enabled,
+    )
     artifacts.set_caching_options(False)
 
     with dsl.ParallelFor(pdf_splits.output) as pdf_split:
         remote_model_secret_mount_path = "/mnt/secrets"
-        converter = docling_convert(
+        converter = docling_convert_vlm(
             input_path=importer.outputs["output_path"],
             artifacts_path=artifacts.outputs["output_path"],
             pdf_filenames=pdf_split,

@@ -1,12 +1,15 @@
+import sys
+from pathlib import Path
 from typing import List
-
+sys.path.insert(0, str(Path(__file__).parent.parent))
 from kfp import dsl, local
 
-from docling_convert_components import (
+from common_components import (
     create_pdf_splits,
-    docling_convert,
+    docling_convert_standard,
     download_docling_models,
     import_pdfs,
+    MODEL_TYPE_STANDARD,
 )
 
 
@@ -27,11 +30,14 @@ def convert_pipeline_local():
         num_splits=1,
     )
 
-    artifacts = download_docling_models()
+    artifacts = download_docling_models(
+        pipeline_type=MODEL_TYPE_STANDARD,
+        remote_model_endpoint_enabled=False,
+    )
 
     first_split = take_first_split(splits=pdf_splits.output)
 
-    docling_convert(
+    docling_convert_standard(
         input_path=importer.outputs["output_path"],
         artifacts_path=artifacts.outputs["output_path"],
         pdf_filenames=first_split.output,

@@ -28,8 +28,8 @@ components:
       parameters:
         Output:
           parameterType: LIST
-  comp-docling-convert:
-    executorLabel: exec-docling-convert
+  comp-docling-convert-vlm:
+    executorLabel: exec-docling-convert-vlm
     inputDefinitions:
       artifacts:
         artifacts_path:
@@ -81,7 +81,15 @@ components:
     executorLabel: exec-download-docling-models
     inputDefinitions:
       parameters:
+        pipeline_type:
+          defaultValue: standard
+          description: Type of pipeline (standard, vlm)
+          isOptional: true
+          parameterType: STRING
         remote_model_endpoint_enabled:
+          defaultValue: false
+          description: Whether to download remote model endpoint models (VLM only)
+          isOptional: true
           parameterType: BOOLEAN
     outputDefinitions:
       artifacts:
@@ -92,10 +100,10 @@ components:
   comp-for-loop-1:
     dag:
       tasks:
-        docling-convert:
+        docling-convert-vlm:
           cachingOptions: {}
           componentRef:
-            name: comp-docling-convert
+            name: comp-docling-convert-vlm
           inputs:
             artifacts:
               artifacts_path:
@@ -117,7 +125,7 @@ components:
               timeout_per_document:
                 componentInputParameter: pipelinechannel--docling_timeout_per_document
           taskInfo:
-            name: docling-convert
+            name: docling-convert-vlm
     inputDefinitions:
       artifacts:
         pipelinechannel--download-docling-models-output_path:
@@ -181,7 +189,7 @@ deploymentSpec:
         - -c
         - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
           \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
-          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.14.3'\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.14.4'\
           \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
           $0\" \"$@\"\n"
         - sh
@@ -199,26 +207,25 @@ deploymentSpec:
           \    num_splits: int,\n) -> List[List[str]]:\n    \"\"\"\n    Create a list\
           \ of PDF splits.\n\n    Args:\n        input_path: Path to the input directory\
           \ containing PDF files.\n        num_splits: Number of splits to create.\n\
-          \    \"\"\"\n    from pathlib import Path # pylint: disable=import-outside-toplevel\
-          \  # noqa: PLC0415, E402\n\n    input_path_p = Path(input_path.path)\n\n\
-          \    all_pdfs = [path.name for path in input_path_p.glob(\"*.pdf\")]\n \
-          \   all_splits = [all_pdfs[i::num_splits] for i in range(num_splits)]\n\
-          \    filled_splits = list(filter(None, all_splits))\n    return filled_splits\n\
-          \n"
+          \    \"\"\"\n    from pathlib import Path # pylint: disable=import-outside-toplevel\n\
+          \n    input_path_p = Path(input_path.path)\n\n    all_pdfs = [path.name\
+          \ for path in input_path_p.glob(\"*.pdf\")]\n    all_splits = [all_pdfs[i::num_splits]\
+          \ for i in range(num_splits)]\n    filled_splits = list(filter(None, all_splits))\n\
+          \    return filled_splits\n\n"
         image: registry.access.redhat.com/ubi9/python-311:9.6-1755074620
-    exec-docling-convert:
+    exec-docling-convert-vlm:
       container:
         args:
         - --executor_input
         - '{{$}}'
         - --function_to_execute
-        - docling_convert
+        - docling_convert_vlm
         command:
         - sh
         - -c
         - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
           \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
-          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.14.3'\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.14.4'\
           \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
           $0\" \"$@\"\n"
         - sh
@@ -232,43 +239,39 @@ deploymentSpec:
 
           '
         - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
-          \ *\n\ndef docling_convert(\n    input_path: dsl.Input[dsl.Artifact],\n\
+          \ *\n\ndef docling_convert_vlm(\n    input_path: dsl.Input[dsl.Artifact],\n\
           \    artifacts_path: dsl.Input[dsl.Artifact],\n    output_path: dsl.Output[dsl.Artifact],\n\
           \    pdf_filenames: List[str],\n    num_threads: int = 4,\n    image_export_mode:\
           \ str = \"embedded\",\n    timeout_per_document: int = 300,\n    remote_model_enabled:\
           \ bool = False,\n    remote_model_secret_mount_path: str = \"/mnt/secrets\"\
           ,\n):\n    \"\"\"\n    Convert a list of PDF files to JSON and Markdown\
-          \ using Docling.\n\n    Args:\n        input_path: Path to the input directory\
-          \ containing PDF files.\n        artifacts_path: Path to the directory containing\
-          \ Docling models.\n        output_path: Path to the output directory for\
-          \ converted JSON and Markdown files.\n        pdf_filenames: List of PDF\
-          \ file names to process.\n        pdf_backend: Backend to use for PDF processing.\n\
-          \        image_export_mode: Mode to export images.\n        table_mode:\
-          \ Mode to detect tables.\n        num_threads: Number of threads to use\
-          \ per document processing.\n        timeout_per_document: Timeout per document\
-          \ processing.\n        remote_model_enabled: Whether or not to use a remote\
+          \ using Docling (VLM Pipeline).\n\n    Args:\n        input_path: Path to\
+          \ the input directory containing PDF files.\n        artifacts_path: Path\
+          \ to the directory containing Docling models.\n        output_path: Path\
+          \ to the output directory for converted JSON and Markdown files.\n     \
+          \   pdf_filenames: List of PDF file names to process.\n        num_threads:\
+          \ Number of threads to use per document processing.\n        timeout_per_document:\
+          \ Timeout per document processing.\n        image_export_mode: Mode to export\
+          \ images.\n        remote_model_enabled: Whether or not to use a remote\
           \ model.\n        remote_model_secret_mount_path: Path to the remote model\
-          \ secret mount path.\n    \"\"\"\n    import os\n    from importlib import\
-          \ import_module\n    from pathlib import Path\n\n    from docling_core.types.doc.base\
-          \ import ImageRefMode  # pylint: disable=import-outside-toplevel  # noqa:\
-          \ PLC0415, E402\n    from docling.datamodel.base_models import InputFormat\
-          \  # pylint: disable=import-outside-toplevel  # noqa: PLC0415, E402\n  \
-          \  from docling.datamodel.pipeline_options import (  # pylint: disable=import-outside-toplevel\
-          \  # noqa: PLC0415, E402\n        VlmPipelineOptions,\n    )\n    from docling.pipeline.vlm_pipeline\
-          \ import VlmPipeline  # pylint: disable=import-outside-toplevel  # noqa:\
-          \ PLC0415, E402\n    from docling.document_converter import DocumentConverter,\
-          \ PdfFormatOption  # pylint: disable=import-outside-toplevel  # noqa: PLC0415,\
-          \ E402\n    from docling.datamodel.accelerator_options import AcceleratorDevice,\
-          \ AcceleratorOptions  # pylint: disable=import-outside-toplevel  # noqa:\
-          \ PLC0415, E402\n    from docling.datamodel.pipeline_options_vlm_model import\
-          \ ApiVlmOptions, ResponseFormat # pylint: disable=import-outside-toplevel\
-          \  # noqa: PLC0415, E402\n\n    input_path_p = Path(input_path.path)\n \
-          \   artifacts_path_p = Path(artifacts_path.path)\n    output_path_p = Path(output_path.path)\n\
-          \    output_path_p.mkdir(parents=True, exist_ok=True)\n\n    input_pdfs\
-          \ = [input_path_p / name for name in pdf_filenames]\n\n    print(f\"docling-convert:\
-          \ starting with backend='vlm', files={len(input_pdfs)}\", flush=True)\n\
-          \    if not pdf_filenames:\n        raise ValueError(\"pdf_filenames must\
-          \ be provided with the list of file names to process\")\n\n    allowed_image_export_modes\
+          \ secret mount path.\n    \"\"\"\n    import os\n    from pathlib import\
+          \ Path\n\n    from docling_core.types.doc.base import ImageRefMode  # pylint:\
+          \ disable=import-outside-toplevel\n    from docling.datamodel.base_models\
+          \ import InputFormat  # pylint: disable=import-outside-toplevel\n    from\
+          \ docling.datamodel.pipeline_options import VlmPipelineOptions  # pylint:\
+          \ disable=import-outside-toplevel\n    from docling.pipeline.vlm_pipeline\
+          \ import VlmPipeline  # pylint: disable=import-outside-toplevel\n    from\
+          \ docling.document_converter import DocumentConverter, PdfFormatOption \
+          \ # pylint: disable=import-outside-toplevel\n    from docling.datamodel.accelerator_options\
+          \ import AcceleratorDevice, AcceleratorOptions  # pylint: disable=import-outside-toplevel\n\
+          \    from docling.datamodel.pipeline_options_vlm_model import ApiVlmOptions,\
+          \ ResponseFormat # pylint: disable=import-outside-toplevel\n\n    input_path_p\
+          \ = Path(input_path.path)\n    artifacts_path_p = Path(artifacts_path.path)\n\
+          \    output_path_p = Path(output_path.path)\n    output_path_p.mkdir(parents=True,\
+          \ exist_ok=True)\n\n    input_pdfs = [input_path_p / name for name in pdf_filenames]\n\
+          \n    print(f\"docling-convert: starting with backend='vlm', files={len(input_pdfs)}\"\
+          , flush=True)\n    if not pdf_filenames:\n        raise ValueError(\"pdf_filenames\
+          \ must be provided with the list of file names to process\")\n\n    allowed_image_export_modes\
           \ = {e.value for e in ImageRefMode}\n    if image_export_mode not in allowed_image_export_modes:\n\
           \        raise ValueError(\n            f\"Invalid image_export_mode: {image_export_mode}.\
           \ Must be one of {sorted(allowed_image_export_modes)}\"\n        )\n\n \
@@ -344,7 +347,7 @@ deploymentSpec:
         - -c
         - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
           \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
-          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.14.3'\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.14.4'\
           \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
           $0\" \"$@\"\n"
         - sh
@@ -359,29 +362,45 @@ deploymentSpec:
           '
         - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
           \ *\n\ndef download_docling_models(\n    output_path: dsl.Output[dsl.Artifact],\n\
-          \    remote_model_endpoint_enabled: bool,\n):\n    \"\"\"\n    Download\
-          \ Docling models.\n\n    Args:\n        output_path: Path to the output\
-          \ directory for Docling models.\n    \"\"\"\n    from pathlib import Path\
-          \ # pylint: disable=import-outside-toplevel  # noqa: PLC0415, E402\n   \
-          \ from docling.utils.model_downloader import download_models # pylint: disable=import-outside-toplevel\
-          \  # noqa: PLC0415, E402\n\n    output_path_p = Path(output_path.path)\n\
-          \n    output_path_p.mkdir(parents=True, exist_ok=True)\n\n    if remote_model_endpoint_enabled:\n\
-          \        # Only models set are what lives in fabianofranz repo\n       \
-          \ # TODO: figure out what needs to be downloaded or removed\n        download_models(\n\
-          \            output_dir=output_path_p,\n            progress=False,\n  \
-          \          force=False,\n            with_layout=True,\n            with_tableformer=True,\n\
+          \    pipeline_type: str = \"standard\",\n    remote_model_endpoint_enabled:\
+          \ bool = False,\n):\n    \"\"\"\n    Download Docling models based on pipeline\
+          \ type and configuration.\n\n    This unified component handles model downloading\
+          \ for different pipeline types:\n    - standard : Download traditional Docling\
+          \ models (layout, tableformer, easyocr)\n    - vlm : Download Docling VLM\
+          \ models (smolvlm, smoldocling) for local inference\n    - vlm-remote :\
+          \ Download Docling VLM models for remote inference\n\n    Args:\n      \
+          \  output_path: Path to the output directory for Docling models\n      \
+          \  pipeline_type: Type of pipeline (standard, vlm)\n        remote_model_endpoint_enabled:\
+          \ Whether to download remote model endpoint models (VLM only)\n    \"\"\"\
+          \n    from pathlib import Path # pylint: disable=import-outside-toplevel\n\
+          \    from docling.utils.model_downloader import download_models # pylint:\
+          \ disable=import-outside-toplevel\n\n    output_path_p = Path(output_path.path)\n\
+          \    output_path_p.mkdir(parents=True, exist_ok=True)\n\n    if pipeline_type\
+          \ == \"standard\":\n        # Standard pipeline: download traditional models\n\
+          \        download_models(\n            output_dir=output_path_p,\n     \
+          \       progress=True,\n            with_layout=True,\n            with_tableformer=True,\n\
+          \            with_easyocr=False,\n        )\n    elif pipeline_type == \"\
+          vlm\" and remote_model_endpoint_enabled:\n        # VLM pipeline with remote\
+          \ model endpoint: Download minimal required models\n        # Only models\
+          \ set are what lives in fabianofranz repo\n        # TODO: figure out what\
+          \ needs to be downloaded or removed\n        download_models(\n        \
+          \    output_dir=output_path_p,\n            progress=False,\n          \
+          \  force=False,\n            with_layout=True,\n            with_tableformer=True,\n\
           \            with_code_formula=False,\n            with_picture_classifier=False,\n\
           \            with_smolvlm=False,\n            with_smoldocling=False,\n\
           \            with_smoldocling_mlx=False,\n            with_granite_vision=False,\n\
-          \            with_easyocr=False,\n        )\n    else:\n        # TODO:\
-          \ set models downloaded by model name passed into KFP pipeline ex: smoldocling\
-          \ OR granite-vision\n        download_models(\n            output_dir=output_path_p,\n\
-          \            with_smolvlm=True,\n            with_smoldocling=True,\n  \
-          \          progress=False,\n            force=False,\n            with_layout=False,\n\
-          \            with_tableformer=False,\n            with_code_formula=False,\n\
-          \            with_picture_classifier=False,\n            with_smoldocling_mlx=False,\n\
-          \            with_granite_vision=False,\n            with_easyocr=False,\n\
-          \        )\n\n"
+          \            with_easyocr=False,\n        )\n    elif pipeline_type == \"\
+          vlm\":\n        # VLM pipeline with local models: Download VLM models for\
+          \ local inference\n        # TODO: set models downloaded by model name passed\
+          \ into KFP pipeline ex: smoldocling OR granite-vision\n        download_models(\n\
+          \            output_dir=output_path_p,\n            with_smolvlm=True,\n\
+          \            with_smoldocling=True,\n            progress=False,\n     \
+          \       force=False,\n            with_layout=False,\n            with_tableformer=False,\n\
+          \            with_code_formula=False,\n            with_picture_classifier=False,\n\
+          \            with_smoldocling_mlx=False,\n            with_granite_vision=False,\n\
+          \            with_easyocr=False,\n        )\n    else:\n        raise ValueError(f\"\
+          Invalid pipeline_type: {pipeline_type}. Must be 'standard' or 'vlm'\")\n\
+          \n"
         image: quay.io/fabianofranz/docling-ubi9:2.54.0
     exec-import-pdfs:
       container:
@@ -396,7 +415,7 @@ deploymentSpec:
         - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
           \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
           \ python3 -m pip install --quiet --no-warn-script-location 'boto3' 'requests'\
-          \  &&  python3 -m pip install --quiet --no-warn-script-location 'kfp==2.14.3'\
+          \  &&  python3 -m pip install --quiet --no-warn-script-location 'kfp==2.14.4'\
           \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
           $0\" \"$@\"\n"
         - sh
@@ -418,17 +437,16 @@ deploymentSpec:
           \ base_url: Base URL of the PDF files.\n        output_path: Path to the\
           \ output directory for the PDF files.\n        from_s3: Whether or not to\
           \ import from S3.\n        s3_secret_mount_path: Path to the secret mount\
-          \ path for the S3 credentials.\n    \"\"\"\n\n    import boto3 # pylint:\
-          \ disable=import-outside-toplevel  # noqa: PLC0415, E402\n    import os\
-          \ # pylint: disable=import-outside-toplevel\n    from pathlib import Path\
-          \ # pylint: disable=import-outside-toplevel  # noqa: PLC0415, E402\n   \
-          \ import requests # pylint: disable=import-outside-toplevel  # noqa: PLC0415,\
-          \ E402\n\n    filenames_list = [name.strip() for name in filenames.split(\"\
-          ,\") if name.strip()]\n\n    if not filenames_list:\n        raise ValueError(\"\
-          filenames must contain at least one filename (comma-separated)\")\n\n  \
-          \  output_path_p = Path(output_path.path)\n    output_path_p.mkdir(parents=True,\
-          \ exist_ok=True)\n\n    if from_s3:\n        if not os.path.exists(s3_secret_mount_path):\n\
-          \            raise ValueError(f\"Secret for S3 should be mounted in {s3_secret_mount_path}\"\
+          \ path for the S3 credentials.\n    \"\"\"\n    import boto3 # pylint: disable=import-outside-toplevel\n\
+          \    import os # pylint: disable=import-outside-toplevel\n    from pathlib\
+          \ import Path # pylint: disable=import-outside-toplevel\n    import requests\
+          \ # pylint: disable=import-outside-toplevel\n\n    filenames_list = [name.strip()\
+          \ for name in filenames.split(\",\") if name.strip()]\n    if not filenames_list:\n\
+          \        raise ValueError(\"filenames must contain at least one filename\
+          \ (comma-separated)\")\n\n    output_path_p = Path(output_path.path)\n \
+          \   output_path_p.mkdir(parents=True, exist_ok=True)\n\n    if from_s3:\n\
+          \        if not os.path.exists(s3_secret_mount_path):\n            raise\
+          \ ValueError(f\"Secret for S3 should be mounted in {s3_secret_mount_path}\"\
           )\n\n        s3_endpoint_url_secret = \"S3_ENDPOINT_URL\"\n        s3_endpoint_url_file_path\
           \ = os.path.join(s3_secret_mount_path, s3_endpoint_url_secret)\n       \
           \ if os.path.isfile(s3_endpoint_url_file_path):\n            with open(s3_endpoint_url_file_path)\
@@ -471,7 +489,7 @@ deploymentSpec:
           \ stream=True, timeout=30) as resp:\n                resp.raise_for_status()\n\
           \                with dest.open(\"wb\") as f:\n                    for chunk\
           \ in resp.iter_content(chunk_size=8192):\n                        if chunk:\n\
-          \                            f.write(chunk)\n    print(\"import-test-pdfs:\
+          \                            f.write(chunk)\n\n    print(\"import-test-pdfs:\
           \ done\", flush=True)\n\n"
         image: registry.access.redhat.com/ubi9/python-311:9.6-1755074620
 pipelineInfo:
@@ -504,6 +522,9 @@ root:
           name: comp-download-docling-models
         inputs:
           parameters:
+            pipeline_type:
+              runtimeValue:
+                constant: vlm
             remote_model_endpoint_enabled:
               componentInputParameter: docling_remote_model_enabled
         taskInfo:
@@ -596,13 +617,13 @@ root:
         isOptional: true
         parameterType: BOOLEAN
 schemaVersion: 2.1.0
-sdkVersion: kfp-2.14.3
+sdkVersion: kfp-2.14.4
 ---
 platforms:
   kubernetes:
     deploymentSpec:
       executors:
-        exec-docling-convert:
+        exec-docling-convert-vlm:
           secretAsVolume:
           - mountPath: /mnt/secrets
             optional: true
