@@ -1,13 +1,13 @@
 import sys
 from pathlib import Path
 
-# Add the parent directory to Python path to find common_components
+# Add the parent directory to Python path to find common
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from kfp import dsl, compiler
 
 # Import common components from the shared module
-from common_components import (
+from common import (
     import_pdfs,
     create_pdf_splits,
     download_docling_models,

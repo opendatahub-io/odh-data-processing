@@ -4,7 +4,7 @@ from typing import List
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from kfp import dsl, local
 
-from common_components import (
+from common import (
     create_pdf_splits,
     docling_convert_standard,
     download_docling_models,
