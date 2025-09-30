@@ -6,7 +6,6 @@ accelerate
 transformers
 evaluate
 peft
-accelerate
 submodlib-py==0.0.3
 tqdm
 jinja2
