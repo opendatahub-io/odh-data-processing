@@ -236,6 +236,7 @@ def docling_convert(
     from docling.datamodel.base_models import InputFormat  # pylint: disable=import-outside-toplevel  # noqa: PLC0415, E402
     from docling.datamodel.pipeline_options import (  # pylint: disable=import-outside-toplevel  # noqa: PLC0415, E402
         VlmPipelineOptions,
+        smoldocling_vlm_conversion_options,
     )
     from docling.pipeline.vlm_pipeline import VlmPipeline  # pylint: disable=import-outside-toplevel  # noqa: PLC0415, E402
     from docling.document_converter import DocumentConverter, PdfFormatOption  # pylint: disable=import-outside-toplevel  # noqa: PLC0415, E402
@@ -309,7 +310,9 @@ def docling_convert(
             },
         )
     else:
-        pipeline_options = VlmPipelineOptions()
+        pipeline_options = VlmPipelineOptions(
+            vlm_options=smoldocling_vlm_conversion_options
+        )
 
     pipeline_cls = VlmPipeline
     pipeline_options.artifacts_path = artifacts_path_p
