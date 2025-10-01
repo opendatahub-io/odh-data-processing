@@ -1,5 +1,5 @@
-# Each line is a file pattern followed by one or more owners.
+# Default owners for everything
+*  @opendatahub-io/odh-data-processing
 
-# These owners will be the default owners for everything in
-# the repo. Unless a later match takes precedence,
-* @alimaredia @fabianofranz @franciscojavierarceo @alinaryan @roburishabh
+# Keep the CODEOWNERS file itself owned by the team
+/.github/CODEOWNERS  @opendatahub-io/odh-data-processing
