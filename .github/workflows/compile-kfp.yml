@@ -1,0 +1,81 @@
+name: Compile KFP pipelines
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - "kubeflow-pipelines/docling-standard/**"
+      - "kubeflow-pipelines/docling-vlm/**"
+      - ".github/workflows/compile-kfp.yml"
+  push:
+    branches: [ main ]
+    paths:
+      - "kubeflow-pipelines/docling-standard/**"
+      - "kubeflow-pipelines/docling-vlm/**"
+      - ".github/workflows/compile-kfp.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  compile:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: docling-standard
+            dir: kubeflow-pipelines/docling-standard
+            cmd: python standard_convert_pipeline.py
+            out: standard_convert_pipeline_compiled.yaml
+          - name: docling-vlm
+            dir: kubeflow-pipelines/docling-vlm
+            cmd: python vlm_convert_pipeline.py
+            out: vlm_convert_pipeline_compiled.yaml
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # Snapshot the committed YAML *before* compile so we can diff later
+      - name: Snapshot baseline (${{ matrix.name }})
+        id: snap
+        run: |
+          set -ux
+          mkdir -p "$RUNNER_TEMP/baselines"
+          BASE="${{ matrix.dir }}/${{ matrix.out }}"
+          SNAP="$RUNNER_TEMP/baselines/${{ matrix.name }}.yaml"
+          if [ -f "$BASE" ]; then
+            cp "$BASE" "$SNAP"
+          else
+            : > "$SNAP"  # empty baseline if none exists yet
+          fi
+          echo "snap=$SNAP" >> "$GITHUB_OUTPUT"
+
+      - name: Install requirements for ${{ matrix.name }}
+        working-directory: ${{ matrix.dir }}
+        run: |
+          set -ux
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Compile ${{ matrix.name }}
+        working-directory: ${{ matrix.dir }}
+        run: |
+          set -ux
+          ${{ matrix.cmd }}
+          # Ensure the compiled YAML exists and is non-empty
+          test -s "${{ matrix.out }}"
+
+      - name: Compare compiled vs committed YAML (${{ matrix.name }})
+        run: |
+          set -ux
+          echo "Comparing compiled pipeline YAML to the committed version..."
+          echo "If this fails, it means you changed pipeline code but did not regenerate the compiled YAML."
+          echo "Please run: ${{ matrix.cmd }} in ${{ matrix.dir }} and commit the updated ${{ matrix.out }}."
+          diff "${{ matrix.dir }}/${{ matrix.out }}" "${{ steps.snap.outputs.snap }}"
