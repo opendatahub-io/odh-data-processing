@@ -1,6 +1,6 @@
 # PIPELINE DEFINITION
 # Name: data-processing-docling-standard-pipeline
-# Description: Docling convert pipeline by the Data Processing Team
+# Description: Docling standard convert pipeline by the Data Processing Team
 # Inputs:
 #    docling_allow_external_plugins: bool [Default: False]
 #    docling_enrich_code: bool [Default: False]
@@ -382,7 +382,7 @@ deploymentSpec:
           \    }\n\n    input_path_p = Path(input_path.path)\n    artifacts_path_p\
           \ = Path(artifacts_path.path)\n    output_path_p = Path(output_path.path)\n\
           \    output_path_p.mkdir(parents=True, exist_ok=True)\n\n    input_pdfs\
-          \ = [input_path_p / name for name in pdf_filenames]\n    print(f\"docling-convert:\
+          \ = [input_path_p / name for name in pdf_filenames]\n    print(f\"docling-standard-convert:\
           \ starting with backend='{pdf_backend}', files={len(input_pdfs)}\", flush=True)\n\
           \n    pipeline_options = PdfPipelineOptions()\n    pipeline_options.artifacts_path\
           \ = artifacts_path_p\n    pipeline_options.do_code_enrichment = enrich_code\n\
@@ -412,12 +412,13 @@ deploymentSpec:
           \            )\n        }\n    )\n\n    results = doc_converter.convert_all(input_pdfs,\
           \ raises_on_error=True)\n\n    for result in results:\n        doc_filename\
           \ = result.input.file.stem\n\n        output_json_path = output_path_p /\
-          \ f\"{doc_filename}.json\"\n        print(f\"docling-convert: saving {output_json_path}\"\
-          , flush=True)\n        result.document.save_as_json(output_json_path, image_mode=ImageRefMode(image_export_mode))\n\
-          \n        output_md_path = output_path_p / f\"{doc_filename}.md\"\n    \
-          \    print(f\"docling-convert: saving {output_md_path}\", flush=True)\n\
-          \        result.document.save_as_markdown(output_md_path, image_mode=ImageRefMode(image_export_mode))\n\
-          \n    print(\"docling-convert: done\", flush=True)\n\n"
+          \ f\"{doc_filename}.json\"\n        print(f\"docling-standard-convert: saving\
+          \ {output_json_path}\", flush=True)\n        result.document.save_as_json(output_json_path,\
+          \ image_mode=ImageRefMode(image_export_mode))\n\n        output_md_path\
+          \ = output_path_p / f\"{doc_filename}.md\"\n        print(f\"docling-standard-convert:\
+          \ saving {output_md_path}\", flush=True)\n        result.document.save_as_markdown(output_md_path,\
+          \ image_mode=ImageRefMode(image_export_mode))\n\n    print(\"docling-standard-convert:\
+          \ done\", flush=True)\n\n"
         image: quay.io/fabianofranz/docling-ubi9:2.54.0
         resources:
           cpuLimit: 4.0
@@ -586,7 +587,7 @@ deploymentSpec:
           \ done\", flush=True)\n\n"
         image: registry.access.redhat.com/ubi9/python-311:9.6-1755074620
 pipelineInfo:
-  description: Docling convert pipeline by the Data Processing Team
+  description: Docling standard convert pipeline by the Data Processing Team
   name: data-processing-docling-standard-pipeline
 root:
   dag:

@@ -11,34 +11,26 @@ from common import (
     import_pdfs,
     create_pdf_splits,
     download_docling_models,
-    docling_convert_standard,
-    MODEL_TYPE_STANDARD,
+    MODEL_TYPE_VLM,
 )
 
+from vlm_components import docling_convert_vlm
+
 @dsl.pipeline(
-    name= "data-processing-docling-standard-pipeline",
-    description= "Docling convert pipeline by the Data Processing Team",
+    name= "data-processing-docling-vlm-pipeline",
+    description= "Docling VLM convert pipeline by the Data Processing Team",
 )
 def convert_pipeline(
     num_splits: int = 3,
     pdf_from_s3: bool = False,
-    pdf_filenames: str = "2203.01017v2.pdf,2206.01062.pdf,2305.03393v1-pg9.pdf,2305.03393v1.pdf,amt_handbook_sample.pdf,code_and_formula.pdf,multi_page.pdf,redp5110_sampled.pdf",
+    pdf_filenames: str = "2203.01017v2.pdf",
     # URL source params
     pdf_base_url: str = "https://github.com/docling-project/docling/raw/v2.43.0/tests/data/pdf",
     # Docling params
-    docling_pdf_backend: str = "dlparse_v4",
-    docling_image_export_mode: str = "embedded",
-    docling_table_mode: str = "accurate",
     docling_num_threads: int = 4,
     docling_timeout_per_document: int = 300,
-    docling_ocr: bool = True,
-    docling_force_ocr: bool = False,
-    docling_ocr_engine: str = "tesseract",
-    docling_allow_external_plugins: bool = False,
-    docling_enrich_code: bool = False,
-    docling_enrich_formula: bool = False,
-    docling_enrich_picture_classes: bool = False,
-    docling_enrich_picture_description: bool = False,
+    docling_image_export_mode: str = "embedded",
+    docling_remote_model_enabled: bool = False,
 ):
     from kfp import kubernetes # pylint: disable=import-outside-toplevel
 
@@ -61,38 +53,35 @@ def convert_pipeline(
     )
 
     artifacts = download_docling_models(
-        pipeline_type=MODEL_TYPE_STANDARD,
-        remote_model_endpoint_enabled=False,
+        pipeline_type=MODEL_TYPE_VLM,
+        remote_model_endpoint_enabled=docling_remote_model_enabled,
     )
     artifacts.set_caching_options(False)
 
     with dsl.ParallelFor(pdf_splits.output) as pdf_split:
-        converter = docling_convert_standard(
+        remote_model_secret_mount_path = "/mnt/secrets"
+        converter = docling_convert_vlm(
             input_path=importer.outputs["output_path"],
             artifacts_path=artifacts.outputs["output_path"],
             pdf_filenames=pdf_split,
-            pdf_backend=docling_pdf_backend,
-            image_export_mode=docling_image_export_mode,
-            table_mode=docling_table_mode,
             num_threads=docling_num_threads,
             timeout_per_document=docling_timeout_per_document,
-            ocr=docling_ocr,
-            force_ocr=docling_force_ocr,
-            ocr_engine=docling_ocr_engine,
-            allow_external_plugins=docling_allow_external_plugins,
-            enrich_code=docling_enrich_code,
-            enrich_formula=docling_enrich_formula,
-            enrich_picture_classes=docling_enrich_picture_classes,
-            enrich_picture_description=docling_enrich_picture_description,
+            image_export_mode=docling_image_export_mode,
+            remote_model_enabled=docling_remote_model_enabled,
+            remote_model_secret_mount_path=remote_model_secret_mount_path,
         )
         converter.set_caching_options(False)
         converter.set_memory_request("1G")
         converter.set_memory_limit("6G")
         converter.set_cpu_request("500m")
         converter.set_cpu_limit("4")
+        kubernetes.use_secret_as_volume(converter,
+            secret_name="data-processing-docling-pipeline",
+            mount_path=remote_model_secret_mount_path,
+            optional=True)
 
 
 if __name__ == "__main__":
-    output_yaml = "docling_convert_pipeline_compiled.yaml"
+    output_yaml = "vlm_convert_pipeline_compiled.yaml"
     compiler.Compiler().compile(convert_pipeline, output_yaml)
-    print(f"Docling pipeline compiled to {output_yaml}")
+    print(f"Docling vlm pipeline compiled to {output_yaml}")

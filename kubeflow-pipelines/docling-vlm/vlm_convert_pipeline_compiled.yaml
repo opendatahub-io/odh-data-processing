@@ -1,6 +1,6 @@
 # PIPELINE DEFINITION
 # Name: data-processing-docling-vlm-pipeline
-# Description: Docling convert pipeline by the Data Processing Team
+# Description: Docling VLM convert pipeline by the Data Processing Team
 # Inputs:
 #    docling_image_export_mode: str [Default: 'embedded']
 #    docling_num_threads: int [Default: 4.0]
@@ -256,22 +256,25 @@ deploymentSpec:
           \ model.\n        remote_model_secret_mount_path: Path to the remote model\
           \ secret mount path.\n    \"\"\"\n    import os\n    from pathlib import\
           \ Path\n\n    from docling_core.types.doc.base import ImageRefMode  # pylint:\
-          \ disable=import-outside-toplevel\n    from docling.datamodel.base_models\
-          \ import InputFormat  # pylint: disable=import-outside-toplevel\n    from\
-          \ docling.datamodel.pipeline_options import VlmPipelineOptions  # pylint:\
-          \ disable=import-outside-toplevel\n    from docling.pipeline.vlm_pipeline\
-          \ import VlmPipeline  # pylint: disable=import-outside-toplevel\n    from\
-          \ docling.document_converter import DocumentConverter, PdfFormatOption \
-          \ # pylint: disable=import-outside-toplevel\n    from docling.datamodel.accelerator_options\
-          \ import AcceleratorDevice, AcceleratorOptions  # pylint: disable=import-outside-toplevel\n\
-          \    from docling.datamodel.pipeline_options_vlm_model import ApiVlmOptions,\
-          \ ResponseFormat # pylint: disable=import-outside-toplevel\n\n    input_path_p\
-          \ = Path(input_path.path)\n    artifacts_path_p = Path(artifacts_path.path)\n\
-          \    output_path_p = Path(output_path.path)\n    output_path_p.mkdir(parents=True,\
-          \ exist_ok=True)\n\n    input_pdfs = [input_path_p / name for name in pdf_filenames]\n\
-          \n    print(f\"docling-convert: starting with backend='vlm', files={len(input_pdfs)}\"\
-          , flush=True)\n    if not pdf_filenames:\n        raise ValueError(\"pdf_filenames\
-          \ must be provided with the list of file names to process\")\n\n    allowed_image_export_modes\
+          \ disable=import-outside-toplevel  # noqa: PLC0415, E402\n    from docling.datamodel.base_models\
+          \ import InputFormat  # pylint: disable=import-outside-toplevel  # noqa:\
+          \ PLC0415, E402\n    from docling.datamodel.pipeline_options import (  #\
+          \ pylint: disable=import-outside-toplevel  # noqa: PLC0415, E402\n     \
+          \   VlmPipelineOptions,\n        smoldocling_vlm_conversion_options,\n \
+          \   )\n    from docling.pipeline.vlm_pipeline import VlmPipeline  # pylint:\
+          \ disable=import-outside-toplevel  # noqa: PLC0415, E402\n    from docling.document_converter\
+          \ import DocumentConverter, PdfFormatOption  # pylint: disable=import-outside-toplevel\
+          \  # noqa: PLC0415, E402\n    from docling.datamodel.accelerator_options\
+          \ import AcceleratorDevice, AcceleratorOptions  # pylint: disable=import-outside-toplevel\
+          \  # noqa: PLC0415, E402\n    from docling.datamodel.pipeline_options_vlm_model\
+          \ import ApiVlmOptions, ResponseFormat # pylint: disable=import-outside-toplevel\
+          \  # noqa: PLC0415, E402\n\n    input_path_p = Path(input_path.path)\n \
+          \   artifacts_path_p = Path(artifacts_path.path)\n    output_path_p = Path(output_path.path)\n\
+          \    output_path_p.mkdir(parents=True, exist_ok=True)\n\n    input_pdfs\
+          \ = [input_path_p / name for name in pdf_filenames]\n\n    print(f\"docling-vlm-convert:\
+          \ starting with backend='vlm', files={len(input_pdfs)}\", flush=True)\n\
+          \    if not pdf_filenames:\n        raise ValueError(\"pdf_filenames must\
+          \ be provided with the list of file names to process\")\n\n    allowed_image_export_modes\
           \ = {e.value for e in ImageRefMode}\n    if image_export_mode not in allowed_image_export_modes:\n\
           \        raise ValueError(\n            f\"Invalid image_export_mode: {image_export_mode}.\
           \ Must be one of {sorted(allowed_image_export_modes)}\"\n        )\n\n \
@@ -306,7 +309,8 @@ deploymentSpec:
           \                ),\n            ),\n            prompt=\"OCR the full page\
           \ to markdown.\",\n            timeout=600,\n            response_format=ResponseFormat.MARKDOWN,\n\
           \            headers={\n                \"Authorization\": f\"Bearer {remote_model_api_key}\"\
-          ,\n            },\n        )\n    else:\n        pipeline_options = VlmPipelineOptions()\n\
+          ,\n            },\n        )\n    else:\n        pipeline_options = VlmPipelineOptions(\n\
+          \            vlm_options=smoldocling_vlm_conversion_options\n        )\n\
           \n    pipeline_cls = VlmPipeline\n    pipeline_options.artifacts_path =\
           \ artifacts_path_p\n    pipeline_options.document_timeout = float(timeout_per_document)\n\
           \    pipeline_options.accelerator_options = AcceleratorOptions(\n      \
@@ -319,12 +323,13 @@ deploymentSpec:
           EASYOCR_MODULE_PATH\"] = str(easyocr_path_p)\n\n    results = doc_converter.convert_all(input_pdfs,\
           \ raises_on_error=True)\n\n    for result in results:\n        doc_filename\
           \ = result.input.file.stem\n\n        output_json_path = output_path_p /\
-          \ f\"{doc_filename}.json\"\n        print(f\"docling-convert: saving {output_json_path}\"\
-          , flush=True)\n        result.document.save_as_json(output_json_path, image_mode=ImageRefMode(image_export_mode))\n\
-          \n        output_md_path = output_path_p / f\"{doc_filename}.md\"\n    \
-          \    print(f\"docling-convert: saving {output_md_path}\", flush=True)\n\
-          \        result.document.save_as_markdown(output_md_path, image_mode=ImageRefMode(image_export_mode))\n\
-          \n    print(\"docling-convert: done\", flush=True)\n\n"
+          \ f\"{doc_filename}.json\"\n        print(f\"docling-vlm-convert: saving\
+          \ {output_json_path}\", flush=True)\n        result.document.save_as_json(output_json_path,\
+          \ image_mode=ImageRefMode(image_export_mode))\n\n        output_md_path\
+          \ = output_path_p / f\"{doc_filename}.md\"\n        print(f\"docling-vlm-convert:\
+          \ saving {output_md_path}\", flush=True)\n        result.document.save_as_markdown(output_md_path,\
+          \ image_mode=ImageRefMode(image_export_mode))\n\n    print(\"docling-vlm-convert:\
+          \ done\", flush=True)\n\n"
         image: quay.io/fabianofranz/docling-ubi9:2.54.0
         resources:
           cpuLimit: 4.0
@@ -493,7 +498,7 @@ deploymentSpec:
           \ done\", flush=True)\n\n"
         image: registry.access.redhat.com/ubi9/python-311:9.6-1755074620
 pipelineInfo:
-  description: Docling convert pipeline by the Data Processing Team
+  description: Docling VLM convert pipeline by the Data Processing Team
   name: data-processing-docling-vlm-pipeline
 root:
   dag:

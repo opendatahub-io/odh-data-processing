@@ -10,8 +10,6 @@ from .components import (
     import_pdfs,
     create_pdf_splits,
     download_docling_models,
-    docling_convert_standard,
-    docling_convert_vlm,
 )
 
 from .constants import (
@@ -26,8 +24,6 @@ __all__ = [
     "import_pdfs",
     "create_pdf_splits", 
     "download_docling_models",
-    "docling_convert_standard",
-    "docling_convert_vlm",
     "PYTHON_BASE_IMAGE",
     "DOCLING_BASE_IMAGE", 
     "MODEL_TYPE_STANDARD",
