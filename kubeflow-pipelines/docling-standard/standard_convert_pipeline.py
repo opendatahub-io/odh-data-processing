@@ -1,15 +1,24 @@
+import sys
+from pathlib import Path
+
+# Add the parent directory to Python path to find common
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 from kfp import dsl, compiler
 
-from docling_convert_components import (
+# Import common components from the shared module
+from common import (
     import_pdfs,
     create_pdf_splits,
     download_docling_models,
-    docling_convert,
+    MODEL_TYPE_STANDARD,
 )
+
+from standard_components import docling_convert_standard
 
 @dsl.pipeline(
     name= "data-processing-docling-standard-pipeline",
-    description= "Docling convert pipeline by the Data Processing Team",
+    description= "Docling standard convert pipeline by the Data Processing Team",
 )
 def convert_pipeline(
     num_splits: int = 3,
@@ -52,11 +61,14 @@ def convert_pipeline(
         num_splits=num_splits,
     )
 
-    artifacts = download_docling_models()
+    artifacts = download_docling_models(
+        pipeline_type=MODEL_TYPE_STANDARD,
+        remote_model_endpoint_enabled=False,
+    )
     artifacts.set_caching_options(False)
 
     with dsl.ParallelFor(pdf_splits.output) as pdf_split:
-        converter = docling_convert(
+        converter = docling_convert_standard(
             input_path=importer.outputs["output_path"],
             artifacts_path=artifacts.outputs["output_path"],
             pdf_filenames=pdf_split,
@@ -82,6 +94,6 @@ def convert_pipeline(
 
 
 if __name__ == "__main__":
-    output_yaml = "docling_convert_pipeline_compiled.yaml"
+    output_yaml = "standard_convert_pipeline_compiled.yaml"
     compiler.Compiler().compile(convert_pipeline, output_yaml)
-    print(f"Docling pipeline compiled to {output_yaml}")
+    print(f"Docling standard pipeline compiled to {output_yaml}")
