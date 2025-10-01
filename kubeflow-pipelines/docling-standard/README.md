@@ -4,12 +4,13 @@ Standard (non-VLM) Docling [Kubeflow Pipeline](https://www.kubeflow.org/docs/com
 
 ## Installation
 
-Download the [compiled YAML file](docling_convert_pipeline_compiled.yaml?raw=1) and upload it on the _Import pipeline_ screen, or import it by URL by pointing it to `https://raw.githubusercontent.com/opendatahub-io/odh-data-processing/refs/heads/main/kubeflow-pipelines/docling-standard/docling_convert_pipeline_compiled.yaml`.
+Download the [compiled YAML file](standard_convert_pipeline_compiled.yaml?raw=1) and upload it on the _Import pipeline_ screen, or import it by URL by pointing it to `https://raw.githubusercontent.com/opendatahub-io/odh-data-processing/refs/heads/main/kubeflow-pipelines/docling-standard/standard_convert_pipeline_compiled.yaml`.
 
 ## Configuration options
 
 The following configuration options are available as KFP parameters when you _Create run_:
 
+- `docling_accelerator_device`: Accelerator device selection. `auto` (default), `cpu`, `cuda`, or `mps`.
 - `docling_enrich_code`: Enable the code enrichment model in the pipeline.
 - `docling_enrich_formula`: Enable the formula enrichment model in the pipeline.
 - `docling_enrich_picture_classes`: Enable the picture classification enrichment model in the pipeline.
@@ -41,9 +42,8 @@ pip install -r requirements.txt
 
 ### Compile the kubeflow pipeline
 
-This generates `docling_convert_pipeline_compiled.yaml`:
+This generates `standard_convert_pipeline_compiled.yaml`:
 
 ```bash
-python docling_convert_pipeline.py
+python standard_convert_pipeline.py
 ```
-

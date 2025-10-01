@@ -40,6 +40,7 @@ def convert_pipeline(
     docling_enrich_formula: bool = False,
     docling_enrich_picture_classes: bool = False,
     docling_enrich_picture_description: bool = False,
+    docling_accelerator_device: str = "auto",  # parameter for accelerator device
 ):
     from kfp import kubernetes # pylint: disable=import-outside-toplevel
 
@@ -85,6 +86,7 @@ def convert_pipeline(
             enrich_formula=docling_enrich_formula,
             enrich_picture_classes=docling_enrich_picture_classes,
             enrich_picture_description=docling_enrich_picture_description,
+            accelerator_device=docling_accelerator_device,  # parameter for accelerator device
         )
         converter.set_caching_options(False)
         converter.set_memory_request("1G")

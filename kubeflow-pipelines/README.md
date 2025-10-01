@@ -17,6 +17,7 @@ Two KFP pipelines are included:
 - Two customizable pipelines to suit different needs:
   - Standard PDF pipeline (backends, OCR engines, table structure, image export)
   - VLM pipeline (Docling VLM or Granite-Vision pipeline options; remote VLM service supported)
+- **Accelerator device selection**: Choose between CPU, CUDA GPU, Apple MPS, or auto-detection for optimal performance
 - Multiple input sources: HTTP/S URLs or S3/S3-compatible APIs like MinIO
 - Secret-based configuration:
   - Remote VLM API configuration via a single mounted Kubernetes Secret
@@ -29,16 +30,23 @@ Two KFP pipelines are included:
 ```bash
 kubeflow-pipelines
 |
-|- docling-standard
-|   |- docling_convert_components.py
-|   |- docling_convert_pipeline.py
-|   |- docling_convert_pipeline_compiled.yaml (generated)
+|- common/
+|   |- __init__.py
+|   |- components.py (shared components)
+|   |- constants.py
+|
+|- docling-standard/
+|   |- standard_components.py
+|   |- standard_convert_pipeline.py
+|   |- standard_convert_pipeline_compiled.yaml (generated)
+|   |- local_run.py
 |   |- requirements.txt
 |
-|- docling-vlm
-    |- docling_convert_components.py
-    |- docling_convert_pipeline.py
-    |- docling_convert_pipeline_compiled.yaml (generated)
+|- docling-vlm/
+    |- vlm_components.py
+    |- vlm_convert_pipeline.py
+    |- vlm_convert_pipeline_compiled.yaml (generated)
+    |- local_run.py
     |- requirements.txt
 ```
 
@@ -56,22 +64,22 @@ Start by importing the compiled YAML file for the desired Docling pipeline (stan
 
 **For the Standard Pipeline**: 
 
-Download the [compiled YAML file](docling-standard/docling_convert_pipeline_compiled.yaml?raw=1) and upload it on the _Import pipeline_ screen, or import it by URL by pointing it to `https://raw.githubusercontent.com/opendatahub-io/odh-data-processing/refs/heads/main/kubeflow-pipelines/docling-standard/docling_convert_pipeline_compiled.yaml`.
+Download the [compiled YAML file](docling-standard/standard_convert_pipeline_compiled.yaml?raw=1) and upload it on the _Import pipeline_ screen, or import it by URL by pointing it to `https://raw.githubusercontent.com/opendatahub-io/odh-data-processing/refs/heads/main/kubeflow-pipelines/docling-standard/standard_convert_pipeline_compiled.yaml`.
 
 **For the VLM Pipeline**: 
 
-Download the [compiled YAML file](docling-vlm/docling_convert_pipeline_compiled.yaml?raw=1) and upload it on the _Import pipeline_ screen, or import it by URL by pointing it to `https://raw.githubusercontent.com/opendatahub-io/odh-data-processing/refs/heads/main/kubeflow-pipelines/docling-vlm/docling_convert_pipeline_compiled.yaml`.
+Download the [compiled YAML file](docling-vlm/vlm_convert_pipeline_compiled.yaml?raw=1) and upload it on the _Import pipeline_ screen, or import it by URL by pointing it to `https://raw.githubusercontent.com/opendatahub-io/odh-data-processing/refs/heads/main/kubeflow-pipelines/docling-vlm/vlm_convert_pipeline_compiled.yaml`.
 
 Optionally, compile from source to generate the pipeline YAML yourself:
 
 ```bash
 # Standard pipeline
 cd odh-data-processing/kubeflow-pipelines/docling-standard
-python docling_convert_pipeline.py
+python standard_convert_pipeline.py
 
 # VLM pipeline
 cd odh-data-processing/kubeflow-pipelines/docling-vlm
-python docling_convert_pipeline.py
+python vlm_convert_pipeline.py
 ```
 
 ## 🖥️ Running
@@ -93,23 +101,32 @@ By default, both pipelines will consume documents stored in an HTTP/S source. To
 
 #### 1) Defaults (Docling with default parameters)
 
-- Standard pipeline defaults include `pdf_backend=dlparse_v4`, `image_export_mode=embedded`, `table_mode=accurate`, `num_threads=4`, `timeout_per_document=300`, `ocr=True`, `force_ocr=False`, `ocr_engine=tesseract`.
-- VLM pipeline defaults include `num_threads=4`, `timeout_per_document=300`, `image_export_mode=embedded`, and `remote_model_enabled=False`.
+- Standard pipeline defaults include `pdf_backend=dlparse_v4`, `image_export_mode=embedded`, `table_mode=accurate`, `num_threads=4`, `timeout_per_document=300`, `ocr=True`, `force_ocr=False`, `ocr_engine=tesseract`, `accelerator_device=auto`.
+- VLM pipeline defaults include `num_threads=4`, `timeout_per_document=300`, `image_export_mode=embedded`, `remote_model_enabled=False`, and `accelerator_device=auto`.
 
-#### 2) Minor tweaks: image and table modes
+#### 2) Accelerator device selection
+
+Both pipelines support choosing the optimal accelerator device for your infrastructure:
+
+- `docling_accelerator_device=auto` (default): Automatically selects the best available device
+- `docling_accelerator_device=cpu`: Forces CPU-only processing for cost-effective execution
+- `docling_accelerator_device=cuda`: Uses NVIDIA GPU acceleration for faster processing (requires GPU-enabled cluster)
+- `docling_accelerator_device=mps`: Uses Apple Metal Performance Shaders (macOS environments)
+
+#### 3) Minor tweaks: image and table modes
 
 - Standard pipeline parameters:
   - `docling_image_export_mode`: `embedded` (default), `placeholder`, or `referenced`. In `embedded` mode, the image is  embedded as base64 encoded string. With `placeholder`, only the position of the image is marked in the output. In `referenced` mode, the image is exported in PNG format and referenced from the main exported document.
   - `docling_table_mode`: e.g., `accurate` (default), or `fast`. The mode to use in the table structure model.
 
-#### 3) Forcing OCR
+#### 4) Forcing OCR
 
 - Standard pipeline:
   - `docling_ocr=True` if enabled, the bitmap content will be processed using OCR.
   - `docling_force_ocr=True` forces full-page OCR regardless of input.
   - `docling_ocr_engine`: `tesseract` (default), `tesserocr`, or `rapidocr`. The OCR engine to use.
 
-#### 4) Using a VLM remotely
+#### 5) Using a VLM remotely
 
 - VLM pipeline (`docling-vlm`): set `docling_remote_model_enabled=True` to route processing through a VLM [model service](https://github.com/rh-aiservices-bu/models-aas).
 - Configuration for remote VLM models comes from a Kubernetes Secret mounted at `/mnt/secrets` instead of individual KFP parameters.
@@ -128,7 +145,7 @@ By default, both pipelines will consume documents stored in an HTTP/S source. To
     --from-literal=REMOTE_MODEL_NAME="granite-vision-3-2"
     ```
 
-#### 5) Consuming documents from S3
+#### 6) Consuming documents from S3
 
 If you'd like to consume documents stored in an S3-compatible object storage rather than in an URL:
 
@@ -153,7 +170,7 @@ If you'd like to consume documents stored in an S3-compatible object storage rat
     --from-literal=S3_PREFIX="my-pdfs"
     ```
 
-#### 6) Using enrichment models (Standard pipeline)
+#### 7) Using enrichment models (Standard pipeline)
 
 Toggle enrichments via boolean parameters:
 - `docling_enrich_code`, `docling_enrich_formula`, `docling_enrich_picture_classes`, `docling_enrich_picture_description`.
@@ -162,6 +179,7 @@ Toggle enrichments via boolean parameters:
 
 - Increase `num_splits` to **parallelize** across more workers (uses KFP `ParallelFor`).
 - Tune `num_threads` and `timeout_per_document`.
-- Adjust **container resources** per component, e.g. `set_memory_limit("6G")`, `set_cpu_limit("4")`, in [`docling-standard/docling_convert_pipeline.py`](docling-standard/docling_convert_pipeline.py) or [`docling-vlm/docling_convert_pipeline.py`](docling-vlm/docling_convert_pipeline.py).
-- Change the value of the `base_image` component parameter ([example](https://github.com/opendatahub-io/odh-data-processing/blob/ceeb8be59910ea2986f33ee4c717ce31be66f1f5/kubeflow-pipelines/docling-standard/docling_convert_components.py#L176)) if you'd like to set a **custom container image** to be used in the pipeline run.
+- **Choose accelerator device** based on your infrastructure: `auto`, `cpu`, `cuda`, or `mps`.
+- Adjust **container resources** per component, e.g. `set_memory_limit("6G")`, `set_cpu_limit("4")`, in [`docling-standard/standard_convert_pipeline.py`](docling-standard/standard_convert_pipeline.py) or [`docling-vlm/vlm_convert_pipeline.py`](docling-vlm/vlm_convert_pipeline.py).
+- Change the value of the `base_image` component parameter if you'd like to set a **custom container image** to be used in the pipeline run.
 - Recompile the pipeline YAML after code or parameter interface changes to refresh the compiled YAML.

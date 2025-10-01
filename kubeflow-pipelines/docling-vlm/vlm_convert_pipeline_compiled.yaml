@@ -2,6 +2,7 @@
 # Name: data-processing-docling-vlm-pipeline
 # Description: Docling VLM convert pipeline by the Data Processing Team
 # Inputs:
+#    docling_accelerator_device: str [Default: 'auto']
 #    docling_image_export_mode: str [Default: 'embedded']
 #    docling_num_threads: int [Default: 4.0]
 #    docling_remote_model_enabled: bool [Default: False]
@@ -43,6 +44,10 @@ components:
             schemaVersion: 0.0.1
           description: Path to the input directory containing PDF files.
       parameters:
+        accelerator_device:
+          defaultValue: auto
+          isOptional: true
+          parameterType: STRING
         image_export_mode:
           defaultValue: embedded
           description: Mode to export images.
@@ -111,6 +116,8 @@ components:
               input_path:
                 componentInputArtifact: pipelinechannel--import-pdfs-output_path
             parameters:
+              accelerator_device:
+                componentInputParameter: pipelinechannel--docling_accelerator_device
               image_export_mode:
                 componentInputParameter: pipelinechannel--docling_image_export_mode
               num_threads:
@@ -141,6 +148,8 @@ components:
           parameterType: LIST
         pipelinechannel--create-pdf-splits-Output-loop-item:
           parameterType: LIST
+        pipelinechannel--docling_accelerator_device:
+          parameterType: STRING
         pipelinechannel--docling_image_export_mode:
           parameterType: STRING
         pipelinechannel--docling_num_threads:
@@ -244,7 +253,8 @@ deploymentSpec:
           \    pdf_filenames: List[str],\n    num_threads: int = 4,\n    image_export_mode:\
           \ str = \"embedded\",\n    timeout_per_document: int = 300,\n    remote_model_enabled:\
           \ bool = False,\n    remote_model_secret_mount_path: str = \"/mnt/secrets\"\
-          ,\n):\n    \"\"\"\n    Convert a list of PDF files to JSON and Markdown\
+          ,\n    accelerator_device: str = \"auto\",  # parameter for accelerator\
+          \ device\n):\n    \"\"\"\n    Convert a list of PDF files to JSON and Markdown\
           \ using Docling (VLM Pipeline).\n\n    Args:\n        input_path: Path to\
           \ the input directory containing PDF files.\n        artifacts_path: Path\
           \ to the directory containing Docling models.\n        output_path: Path\
@@ -311,16 +321,23 @@ deploymentSpec:
           \            headers={\n                \"Authorization\": f\"Bearer {remote_model_api_key}\"\
           ,\n            },\n        )\n    else:\n        pipeline_options = VlmPipelineOptions(\n\
           \            vlm_options=smoldocling_vlm_conversion_options\n        )\n\
-          \n    pipeline_cls = VlmPipeline\n    pipeline_options.artifacts_path =\
-          \ artifacts_path_p\n    pipeline_options.document_timeout = float(timeout_per_document)\n\
-          \    pipeline_options.accelerator_options = AcceleratorOptions(\n      \
-          \  num_threads=num_threads, device=AcceleratorDevice.AUTO\n    )\n\n   \
-          \ doc_converter = DocumentConverter(\n        format_options={\n       \
-          \     InputFormat.PDF: PdfFormatOption(\n                pipeline_cls=pipeline_cls,\n\
-          \                pipeline_options=pipeline_options,\n            )\n   \
-          \     }\n    )\n\n    easyocr_path_p = artifacts_path_p / \"EasyOcr\"\n\
-          \    os.environ[\"MODULE_PATH\"] = str(easyocr_path_p)\n    os.environ[\"\
-          EASYOCR_MODULE_PATH\"] = str(easyocr_path_p)\n\n    results = doc_converter.convert_all(input_pdfs,\
+          \n    # device validation\n    allowed_devices = [\"auto\", \"cpu\", \"\
+          cuda\", \"mps\"]\n    if accelerator_device.lower() not in allowed_devices:\n\
+          \        raise ValueError(\n            f\"Invalid accelerator_device: {accelerator_device}.\
+          \ Must be one of {allowed_devices}\"\n        )\n\n    # Map string to AcceleratorDevice\
+          \ enum\n    device_map = {\n        \"auto\": AcceleratorDevice.AUTO,\n\
+          \        \"cpu\": AcceleratorDevice.CPU,\n        \"cuda\": AcceleratorDevice.CUDA,\n\
+          \        \"mps\": AcceleratorDevice.MPS,\n    }\n\n    pipeline_cls = VlmPipeline\n\
+          \    pipeline_options.artifacts_path = artifacts_path_p\n    pipeline_options.document_timeout\
+          \ = float(timeout_per_document)\n    # Replace lines 127-129 with:\n   \
+          \ pipeline_options.accelerator_options = AcceleratorOptions(\n        num_threads=num_threads,\
+          \ device=device_map[accelerator_device.lower()]\n    )\n\n    doc_converter\
+          \ = DocumentConverter(\n        format_options={\n            InputFormat.PDF:\
+          \ PdfFormatOption(\n                pipeline_cls=pipeline_cls,\n       \
+          \         pipeline_options=pipeline_options,\n            )\n        }\n\
+          \    )\n\n    easyocr_path_p = artifacts_path_p / \"EasyOcr\"\n    os.environ[\"\
+          MODULE_PATH\"] = str(easyocr_path_p)\n    os.environ[\"EASYOCR_MODULE_PATH\"\
+          ] = str(easyocr_path_p)\n\n    results = doc_converter.convert_all(input_pdfs,\
           \ raises_on_error=True)\n\n    for result in results:\n        doc_filename\
           \ = result.input.file.stem\n\n        output_json_path = output_path_p /\
           \ f\"{doc_filename}.json\"\n        print(f\"docling-vlm-convert: saving\
@@ -556,6 +573,8 @@ root:
               taskOutputParameter:
                 outputParameterKey: Output
                 producerTask: create-pdf-splits
+            pipelinechannel--docling_accelerator_device:
+              componentInputParameter: docling_accelerator_device
             pipelinechannel--docling_image_export_mode:
               componentInputParameter: docling_image_export_mode
             pipelinechannel--docling_num_threads:
@@ -589,6 +608,10 @@ root:
           name: import-pdfs
   inputDefinitions:
     parameters:
+      docling_accelerator_device:
+        defaultValue: auto
+        isOptional: true
+        parameterType: STRING
       docling_image_export_mode:
         defaultValue: embedded
         isOptional: true

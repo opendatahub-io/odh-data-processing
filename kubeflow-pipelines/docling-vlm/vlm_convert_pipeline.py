@@ -31,6 +31,7 @@ def convert_pipeline(
     docling_timeout_per_document: int = 300,
     docling_image_export_mode: str = "embedded",
     docling_remote_model_enabled: bool = False,
+    docling_accelerator_device: str = "auto",  # parameter for accelerator device
 ):
     from kfp import kubernetes # pylint: disable=import-outside-toplevel
 
@@ -69,6 +70,7 @@ def convert_pipeline(
             image_export_mode=docling_image_export_mode,
             remote_model_enabled=docling_remote_model_enabled,
             remote_model_secret_mount_path=remote_model_secret_mount_path,
+            accelerator_device=docling_accelerator_device,  # parameter for accelerator device
         )
         converter.set_caching_options(False)
         converter.set_memory_request("1G")
