@@ -17,7 +17,6 @@ from .constants import (
     DOCLING_BASE_IMAGE,
     MODEL_TYPE_STANDARD,
     MODEL_TYPE_VLM,
-    MODEL_TYPE_VLM_REMOTE,
 )
 
 __all__ = [
@@ -28,5 +27,4 @@ __all__ = [
     "DOCLING_BASE_IMAGE", 
     "MODEL_TYPE_STANDARD",
     "MODEL_TYPE_VLM",
-    "MODEL_TYPE_VLM_REMOTE",
 ]

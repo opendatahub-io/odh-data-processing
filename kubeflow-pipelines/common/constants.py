@@ -5,4 +5,3 @@ DOCLING_BASE_IMAGE = "quay.io/fabianofranz/docling-ubi9:2.54.0"
 # Model types for download_docling_models component
 MODEL_TYPE_STANDARD = "standard"
 MODEL_TYPE_VLM = "vlm"
-MODEL_TYPE_VLM_REMOTE = "vlm-remote"

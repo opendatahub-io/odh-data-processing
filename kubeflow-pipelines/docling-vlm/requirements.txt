@@ -2,4 +2,3 @@ docling >= 2.47.1
 kfp >= 2.14.3
 kfp-kubernetes
 boto3 >= 1.39.17
-tesserocr

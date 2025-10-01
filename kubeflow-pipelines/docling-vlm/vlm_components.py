@@ -137,10 +137,6 @@ def docling_convert_vlm(
         }
     )
 
-    easyocr_path_p = artifacts_path_p / "EasyOcr"
-    os.environ["MODULE_PATH"] = str(easyocr_path_p)
-    os.environ["EASYOCR_MODULE_PATH"] = str(easyocr_path_p)
-
     results = doc_converter.convert_all(input_pdfs, raises_on_error=True)
 
     for result in results:
