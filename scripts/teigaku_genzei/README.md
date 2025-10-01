@@ -3,14 +3,22 @@ A sample data of teigaku genzei (the fixed-amount tax reduction) for InstructLab
 
 # Data source
 
-The following FAQ documents from National Tax Agency (NTA) about the fixed-amount tax reduction of Reiwa 6 (2024).
+This example is based on the topic of Teigaku Genzei (the fixed-amount tax reduction) of Reiwa 6 (2024) by National Tax Agency (NTA) of Japan.
+- https://www.nta.go.jp/users/gensen/teigakugenzei/01.htm
+
+In particular, the following FAQ documents are used.
 - https://www.nta.go.jp/publication/pamph/gensen/0024001-021.pdf
 - https://www.nta.go.jp/publication/pamph/shotoku/0024004-072_01.pdf
 
+Before using these documents, please read and follow the conditions specified by NTA.
+- https://www.nta.go.jp/english/notice/index.htm
+
 In this README, the first file is used for training and testing. 
 The second file is used for making in-context learning examples for SDG (synthetic data generation) of training data, i.e., used for teaching the teacher model how to synthesize the training data.
-These FAQ documents have a similar format and can be processed similarly. 
-Please download these two files by yourself.
+These FAQ documents will be processed throughout this example using the scripts provided in this repository. 
+These documents have a similar format and can be processed similarly. 
+Please download these two PDF files by yourself.
+
 
 # Common preprocessing of source document
 
