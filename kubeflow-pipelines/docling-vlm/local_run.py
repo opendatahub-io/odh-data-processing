@@ -1,13 +1,20 @@
+import sys
+from pathlib import Path
 from typing import List
+
+# Add the parent directory to Python path to find common
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from kfp import dsl, local
 
-from docling_convert_components import (
+from common import (
     create_pdf_splits,
-    docling_convert,
     download_docling_models,
     import_pdfs,
+    MODEL_TYPE_VLM,
 )
+
+from vlm_components import docling_convert_vlm
 
 
 @dsl.component(base_image="python:3.11")
@@ -27,14 +34,19 @@ def convert_pipeline_local():
         num_splits=1,
     )
 
-    artifacts = download_docling_models(remote_model_endpoint_enabled=False)
+    artifacts = download_docling_models(
+        pipeline_type=MODEL_TYPE_VLM,
+        remote_model_endpoint_enabled=False,
+    )
 
     first_split = take_first_split(splits=pdf_splits.output)
 
-    docling_convert(
+    docling_convert_vlm(
         input_path=importer.outputs["output_path"],
         artifacts_path=artifacts.outputs["output_path"],
         pdf_filenames=first_split.output,
+        accelerator_device="auto",  # parameter for accelerator device
+        remote_model_enabled=False,
     )
 
 
