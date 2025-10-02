@@ -11,7 +11,6 @@ from common import (
     import_pdfs,
     create_pdf_splits,
     download_docling_models,
-    MODEL_TYPE_STANDARD,
 )
 
 from standard_components import docling_convert_standard
@@ -62,7 +61,7 @@ def convert_pipeline(
     )
 
     artifacts = download_docling_models(
-        pipeline_type=MODEL_TYPE_STANDARD,
+        pipeline_type="standard",
         remote_model_endpoint_enabled=False,
     )
     artifacts.set_caching_options(False)

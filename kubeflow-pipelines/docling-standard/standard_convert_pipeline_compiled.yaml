@@ -470,32 +470,31 @@ deploymentSpec:
           \    from docling.utils.model_downloader import download_models # pylint:\
           \ disable=import-outside-toplevel\n\n    output_path_p = Path(output_path.path)\n\
           \    output_path_p.mkdir(parents=True, exist_ok=True)\n\n    if pipeline_type\
-          \ == MODEL_TYPE_STANDARD:\n        # Standard pipeline: download traditional\
-          \ models\n        download_models(\n            output_dir=output_path_p,\n\
-          \            progress=True,\n            with_layout=True,\n           \
-          \ with_tableformer=True,\n            with_easyocr=False,\n        )\n \
-          \   elif pipeline_type == MODEL_TYPE_VLM and remote_model_endpoint_enabled:\n\
-          \        # VLM pipeline with remote model endpoint: Download minimal required\
-          \ models\n        # Only models set are what lives in fabianofranz repo\n\
-          \        # TODO: figure out what needs to be downloaded or removed\n   \
-          \     download_models(\n            output_dir=output_path_p,\n        \
-          \    progress=False,\n            force=False,\n            with_layout=True,\n\
-          \            with_tableformer=True,\n            with_code_formula=False,\n\
-          \            with_picture_classifier=False,\n            with_smolvlm=False,\n\
-          \            with_smoldocling=False,\n            with_smoldocling_mlx=False,\n\
-          \            with_granite_vision=False,\n            with_easyocr=False,\n\
-          \        )\n    elif pipeline_type == MODEL_TYPE_VLM:\n        # VLM pipeline\
-          \ with local models: Download VLM models for local inference\n        #\
-          \ TODO: set models downloaded by model name passed into KFP pipeline ex:\
-          \ smoldocling OR granite-vision\n        download_models(\n            output_dir=output_path_p,\n\
-          \            with_smolvlm=True,\n            with_smoldocling=True,\n  \
-          \          progress=False,\n            force=False,\n            with_layout=False,\n\
-          \            with_tableformer=False,\n            with_code_formula=False,\n\
-          \            with_picture_classifier=False,\n            with_smoldocling_mlx=False,\n\
-          \            with_granite_vision=False,\n            with_easyocr=False,\n\
-          \        )\n    else:\n        raise ValueError(f\"Invalid pipeline_type:\
-          \ {pipeline_type}. Must be '{MODEL_TYPE_STANDARD}' or '{MODEL_TYPE_VLM}'\"\
-          )\n\n"
+          \ == \"standard\":\n        # Standard pipeline: download traditional models\n\
+          \        download_models(\n            output_dir=output_path_p,\n     \
+          \       progress=True,\n            with_layout=True,\n            with_tableformer=True,\n\
+          \            with_easyocr=False,\n        )\n    elif pipeline_type == \"\
+          vlm\" and remote_model_endpoint_enabled:\n        # VLM pipeline with remote\
+          \ model endpoint: Download minimal required models\n        # Only models\
+          \ set are what lives in fabianofranz repo\n        # TODO: figure out what\
+          \ needs to be downloaded or removed\n        download_models(\n        \
+          \    output_dir=output_path_p,\n            progress=False,\n          \
+          \  force=False,\n            with_layout=True,\n            with_tableformer=True,\n\
+          \            with_code_formula=False,\n            with_picture_classifier=False,\n\
+          \            with_smolvlm=False,\n            with_smoldocling=False,\n\
+          \            with_smoldocling_mlx=False,\n            with_granite_vision=False,\n\
+          \            with_easyocr=False,\n        )\n    elif pipeline_type == \"\
+          vlm\":\n        # VLM pipeline with local models: Download VLM models for\
+          \ local inference\n        # TODO: set models downloaded by model name passed\
+          \ into KFP pipeline ex: smoldocling OR granite-vision\n        download_models(\n\
+          \            output_dir=output_path_p,\n            with_smolvlm=True,\n\
+          \            with_smoldocling=True,\n            progress=False,\n     \
+          \       force=False,\n            with_layout=False,\n            with_tableformer=False,\n\
+          \            with_code_formula=False,\n            with_picture_classifier=False,\n\
+          \            with_smoldocling_mlx=False,\n            with_granite_vision=False,\n\
+          \            with_easyocr=False,\n        )\n    else:\n        raise ValueError(f\"\
+          Invalid pipeline_type: {pipeline_type}. Must be 'standard' or 'vlm'\")\n\
+          \n"
         image: quay.io/fabianofranz/docling-ubi9:2.54.0
     exec-import-pdfs:
       container:

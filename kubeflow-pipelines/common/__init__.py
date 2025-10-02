@@ -15,8 +15,6 @@ from .components import (
 from .constants import (
     PYTHON_BASE_IMAGE,
     DOCLING_BASE_IMAGE,
-    MODEL_TYPE_STANDARD,
-    MODEL_TYPE_VLM,
 )
 
 __all__ = [
@@ -25,6 +23,4 @@ __all__ = [
     "download_docling_models",
     "PYTHON_BASE_IMAGE",
     "DOCLING_BASE_IMAGE", 
-    "MODEL_TYPE_STANDARD",
-    "MODEL_TYPE_VLM",
 ]
