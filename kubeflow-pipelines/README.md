@@ -56,22 +56,22 @@ Start by importing the compiled YAML file for the desired Docling pipeline (stan
 
 **For the Standard Pipeline**: 
 
-Download the [compiled YAML file](docling-standard/docling_convert_pipeline_compiled.yaml?raw=1) and upload it on the _Import pipeline_ screen, or import it by URL by pointing it to `https://raw.githubusercontent.com/opendatahub-io/odh-data-processing/refs/heads/main/kubeflow-pipelines/docling-standard/docling_convert_pipeline_compiled.yaml`.
+Download the [compiled YAML file](docling-standard/standard_convert_pipeline_compiled.yaml?raw=1) and upload it on the _Import pipeline_ screen, or import it by URL by pointing it to `https://github.com/opendatahub-io/odh-data-processing/raw/refs/heads/main/kubeflow-pipelines/docling-standard/standard_convert_pipeline_compiled.yaml`.
 
 **For the VLM Pipeline**: 
 
-Download the [compiled YAML file](docling-vlm/docling_convert_pipeline_compiled.yaml?raw=1) and upload it on the _Import pipeline_ screen, or import it by URL by pointing it to `https://raw.githubusercontent.com/opendatahub-io/odh-data-processing/refs/heads/main/kubeflow-pipelines/docling-vlm/docling_convert_pipeline_compiled.yaml`.
+Download the [compiled YAML file](docling-vlm/vlm_convert_pipeline_compiled.yaml?raw=1) and upload it on the _Import pipeline_ screen, or import it by URL by pointing it to `https://github.com/opendatahub-io/odh-data-processing/raw/refs/heads/main/kubeflow-pipelines/docling-vlm/vlm_convert_pipeline_compiled.yaml`.
 
 Optionally, compile from source to generate the pipeline YAML yourself:
 
 ```bash
 # Standard pipeline
 cd odh-data-processing/kubeflow-pipelines/docling-standard
-python docling_convert_pipeline.py
+python standard_convert_pipeline.py
 
 # VLM pipeline
 cd odh-data-processing/kubeflow-pipelines/docling-vlm
-python docling_convert_pipeline.py
+python vlm_convert_pipeline.py
 ```
 
 ## 🖥️ Running
@@ -84,8 +84,8 @@ Once conversion finishes, the converted documents are stored in two output forma
 
 Both standard and VLM pipelines provide default conversion options that should be a good starting point for most document conversions. For more advanced conversion options, both pipelines expose a set of **runtime parameters** that can be changed to tweak the conversion strategy used by Docling:
 
-- [docling-standard configuration options](docling-standard/README.md)
-- [docling-vlm configuration options](docling-vlm/README.md) 
+- [docling-standard configuration options](docling-standard)
+- [docling-vlm configuration options](docling-vlm) 
 
 By default, both pipelines will consume documents stored in an HTTP/S source. To configure the source of the documents you'd like to convert, set the `pdf_base_url` and the `pdf_filenames` (comma-separated list of the file names) parameters. The default values of these parameters point to a sample set of PDFs frequently used to test Docling conversions.
 
@@ -162,6 +162,6 @@ Toggle enrichments via boolean parameters:
 
 - Increase `num_splits` to **parallelize** across more workers (uses KFP `ParallelFor`).
 - Tune `num_threads` and `timeout_per_document`.
-- Adjust **container resources** per component, e.g. `set_memory_limit("6G")`, `set_cpu_limit("4")`, in [`docling-standard/docling_convert_pipeline.py`](docling-standard/docling_convert_pipeline.py) or [`docling-vlm/docling_convert_pipeline.py`](docling-vlm/docling_convert_pipeline.py).
-- Change the value of the `base_image` component parameter ([example](https://github.com/opendatahub-io/odh-data-processing/blob/ceeb8be59910ea2986f33ee4c717ce31be66f1f5/kubeflow-pipelines/docling-standard/docling_convert_components.py#L176)) if you'd like to set a **custom container image** to be used in the pipeline run.
+- Adjust **container resources** per component, e.g. `set_memory_limit("6G")`, `set_cpu_limit("4")`, in [`docling-standard/standard_convert_pipeline.py`](docling-standard/standard_convert_pipeline.py) or [`docling-vlm/vlm_convert_pipeline.py`](docling-vlm/vlm_convert_pipeline.py).
+- Change the value of the `base_image` component parameter ([example](https://github.com/opendatahub-io/odh-data-processing/blob/2bc017c30f862a11fc12c0551c31e8cc93ea6e51/kubeflow-pipelines/docling-standard/standard_components.py#L12)) if you'd like to set a **custom container image** to be used in the pipeline run.
 - Recompile the pipeline YAML after code or parameter interface changes to refresh the compiled YAML.

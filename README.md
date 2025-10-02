@@ -24,7 +24,7 @@ odh-data-processing
 
 ### Kubeflow Pipelines
 
-Refer to the [ODH Data Processing Kubeflow Pipelines](kubeflow-pipelines/README.md) documentation for instructions on how to install, run, and customize the [Standard](kubeflow-pipelines/docling-standard/README.md) and [VLM](kubeflow-pipelines/docling-vlm/README.md) pipelines.
+Refer to the [ODH Data Processing Kubeflow Pipelines](kubeflow-pipelines) documentation for instructions on how to install, run, and customize the [Standard](kubeflow-pipelines/docling-standard) and [VLM](kubeflow-pipelines/docling-vlm) pipelines.
 
 ## 🤝 Contributing
 
