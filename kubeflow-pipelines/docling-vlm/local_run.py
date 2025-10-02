@@ -11,7 +11,6 @@ from common import (
     create_pdf_splits,
     download_docling_models,
     import_pdfs,
-    MODEL_TYPE_VLM,
 )
 
 from vlm_components import docling_convert_vlm
@@ -35,7 +34,7 @@ def convert_pipeline_local():
     )
 
     artifacts = download_docling_models(
-        pipeline_type=MODEL_TYPE_VLM,
+        pipeline_type="vlm",  
         remote_model_endpoint_enabled=False,
     )
 

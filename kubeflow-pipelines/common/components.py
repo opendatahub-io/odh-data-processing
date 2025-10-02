@@ -3,8 +3,6 @@ from kfp import dsl
 from .constants import (
     PYTHON_BASE_IMAGE, 
     DOCLING_BASE_IMAGE,
-    MODEL_TYPE_STANDARD,
-    MODEL_TYPE_VLM,
 )
 
 @dsl.component(
@@ -169,7 +167,7 @@ def download_docling_models(
     output_path_p = Path(output_path.path)
     output_path_p.mkdir(parents=True, exist_ok=True)
 
-    if pipeline_type == MODEL_TYPE_STANDARD:
+    if pipeline_type == "standard":
         # Standard pipeline: download traditional models
         download_models(
             output_dir=output_path_p,
@@ -178,7 +176,7 @@ def download_docling_models(
             with_tableformer=True,
             with_easyocr=False,
         )
-    elif pipeline_type == MODEL_TYPE_VLM and remote_model_endpoint_enabled:
+    elif pipeline_type == "vlm" and remote_model_endpoint_enabled:
         # VLM pipeline with remote model endpoint: Download minimal required models
         # Only models set are what lives in fabianofranz repo
         # TODO: figure out what needs to be downloaded or removed
@@ -196,7 +194,7 @@ def download_docling_models(
             with_granite_vision=False,
             with_easyocr=False,
         )
-    elif pipeline_type == MODEL_TYPE_VLM:
+    elif pipeline_type == "vlm":
         # VLM pipeline with local models: Download VLM models for local inference
         # TODO: set models downloaded by model name passed into KFP pipeline ex: smoldocling OR granite-vision
         download_models(
@@ -214,4 +212,4 @@ def download_docling_models(
             with_easyocr=False,
         )
     else:
-        raise ValueError(f"Invalid pipeline_type: {pipeline_type}. Must be '{MODEL_TYPE_STANDARD}' or '{MODEL_TYPE_VLM}'")
+        raise ValueError(f"Invalid pipeline_type: {pipeline_type}. Must be 'standard' or 'vlm'")
