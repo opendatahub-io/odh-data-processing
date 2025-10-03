@@ -4,7 +4,7 @@ Standard (non-VLM) Docling [Kubeflow Pipeline](https://www.kubeflow.org/docs/com
 
 ## Installation
 
-Download the [compiled YAML file](docling_convert_pipeline_compiled.yaml?raw=1) and upload it on the _Import pipeline_ screen, or import it by URL by pointing it to `https://raw.githubusercontent.com/opendatahub-io/odh-data-processing/refs/heads/main/kubeflow-pipelines/docling-standard/docling_convert_pipeline_compiled.yaml`.
+Download the [compiled YAML file](standard_convert_pipeline_compiled.yaml?raw=1) and upload it on the _Import pipeline_ screen, or import it by URL by pointing it to `https://github.com/opendatahub-io/odh-data-processing/raw/refs/heads/main/kubeflow-pipelines/docling-standard/standard_convert_pipeline_compiled.yaml`.
 
 ## Configuration options
 
@@ -41,9 +41,9 @@ pip install -r requirements.txt
 
 ### Compile the kubeflow pipeline
 
-This generates `docling_convert_pipeline_compiled.yaml`:
+This generates `standard_convert_pipeline_compiled.yaml`:
 
 ```bash
-python docling_convert_pipeline.py
+python standard_convert_pipeline.py
 ```
 
