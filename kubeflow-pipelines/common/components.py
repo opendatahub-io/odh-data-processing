@@ -123,7 +123,7 @@ def import_pdfs(
 def create_pdf_splits(
     input_path: dsl.Input[dsl.Artifact],
     num_splits: int,
-) -> List[List[str]]:
+) -> list:
     """
     Create a list of PDF splits.
 
