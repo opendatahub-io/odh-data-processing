@@ -6,12 +6,14 @@ on:
     paths:
       - "kubeflow-pipelines/docling-standard/**"
       - "kubeflow-pipelines/docling-vlm/**"
+      - "kubeflow-pipelines/common/**"
       - ".github/workflows/compile-kfp.yml"
   push:
     branches: [ main ]
     paths:
       - "kubeflow-pipelines/docling-standard/**"
       - "kubeflow-pipelines/docling-vlm/**"
+      - "kubeflow-pipelines/common/**"
       - ".github/workflows/compile-kfp.yml"
 
 permissions:
