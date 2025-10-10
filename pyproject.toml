@@ -1,0 +1,24 @@
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+
+# Exclude generated files, virtualenvs, and other non-source paths
+extend-exclude = [
+  ".ipynb_checkpoints",
+  ".venv",
+  "venv",
+]
+
+# Lint rules to enable:
+# E pycodestyle
+# F pyflakes
+# I import sorting (isort-compatible)
+# B flake8-bugbear (common bug patterns)
+# W warnings
+# UP pyupgrade (modernize syntax)
+lint.select = ["E","F","I","B","W","UP"]
+
+# Rules to ignore:
+# E203  whitespace before ':' (Black-compatible)
+# E501  line length (Black handles line wrapping)
+lint.ignore = ["E203","E501"]

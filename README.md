@@ -1,22 +1,39 @@
 # ODH Data Processing
 
-The `odh-data-processing` repo is a place where pieces exist to build and maintain customizable and robust data pipelines on Open Data Hub.
+![Status dev-preview](https://img.shields.io/badge/status-dev--preview-blue)
+![GitHub License](https://img.shields.io/github/license/opendatahub-io/odh-data-processing)
+![GitHub Commits](https://img.shields.io/github/commit-activity/t/opendatahub-io/odh-data-processing)
 
-This repository contains python scripts, [Kubeflow Pipelines](https://www.kubeflow.org/docs/components/pipelines/), and [Jupyter notebooks](https://jupyter.org/).
+This repository provides reference **data-processing pipelines and examples** for [Open Data Hub](https://github.com/opendatahub-io) / [Red Hat OpenShift AI](https://www.redhat.com/en/products/ai/openshift-ai). It focuses on **document conversion** and **chunking** using the [Docling](https://docling-project.github.io/docling/) toolkit, packaged as [Kubeflow Pipelines](https://www.kubeflow.org/docs/components/pipelines/) (KFP), example [Jupyter Notebooks](https://jupyter.org/), and helper scripts.
 
-## Repository Structure
-
-The repository is organized by the platform Open Datahub users can run their data pipelines.
-
-Currently that is Kubeflow Pipelines, and Jupyter Notebooks.
+## 📦 Repository Structure
 
 ```bash
 odh-data-processing
 |
 |- kubeflow-pipelines
-|   |- docling
+|   |- docling-standard
+|   |- docling-vlm
+|
 |- notebooks
-    |- model-customization
-        |- data-pre-processing
-        |- data-post-processing
+    |- model-customization-data-preprocessing
+    |- model-customization-data-postprocessing
 ```
+
+## ✨ Getting Started
+
+### Kubeflow Pipelines
+
+Refer to the [ODH Data Processing Kubeflow Pipelines](kubeflow-pipelines) documentation for instructions on how to install, run, and customize the [Standard](kubeflow-pipelines/docling-standard) and [VLM](kubeflow-pipelines/docling-vlm) pipelines.
+
+## 🤝 Contributing
+
+We welcome issues and pull requests. Please:
+- Open an issue describing the change.
+- Include testing instructions.
+- For pipeline/component changes, recompile the pipeline and update generated YAML if applicable.
+- Keep parameter names and docs consistent between code and README.
+
+## 📄 License
+
+Apache License 2.0
