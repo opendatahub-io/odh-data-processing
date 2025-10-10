@@ -10,13 +10,21 @@ In particular, the following FAQ documents are used.
 - https://www.nta.go.jp/publication/pamph/gensen/0024001-021.pdf
 - https://www.nta.go.jp/publication/pamph/shotoku/0024004-072_01.pdf
 
-Before using these documents, please read and follow the conditions specified by NTA.
-- https://www.nta.go.jp/english/notice/index.htm
-
-In this README, the first file is used for training and testing. 
+In this example, the first file is used for creating training and testing datasets. 
 The second file is used for making in-context learning examples for SDG (synthetic data generation) of training data, i.e., used for teaching the teacher model how to synthesize the training data.
-These FAQ documents will be processed throughout this example using the scripts provided in this repository. 
-These documents have a similar format and can be processed similarly. 
+These datasets will be produced by converter scripts provided in this repository with helps from Docling and SDG hub.
+These datasets as well as the fine-tuned model trained with the training data and its outputs to users
+may contain information derived from the above Teigaku Genzei documents with modifications by the converters and LLMs.
+
+**IMPORTANT**: NTA's Teigaku Genzei documents are distributed and licensed to each user by NTA under the following terms and conditions.
+- 利用規約・免責事項・著作権 (JA) https://www.nta.go.jp/chuijiko/copy.htm
+- Terms of Use, Disclaimer, Copyright (EN) https://www.nta.go.jp/english/notice/index.htm
+
+Neither Red Hat nor IBM is a licensee or licensor of such NTA's Teigaku Genzei documents.
+
+<!-- - IBM granite-3.3-8b-instruct did not use training data that is derived from these NTA's documents. -->
+<!-- - For example, if the fine-tuned model is used in a Tax QA system, then one should ensure that QA system displays the link to the source of the data and the existence of the modification to the data, etc. to all the end users of the QA system. -->
+
 Please download these two PDF files by yourself.
 
 
