@@ -5,9 +5,14 @@ from unitxt.llm_as_judge_constants import CriteriaOption, CriteriaWithOptions
 
 # Source
 # https://www.unitxt.ai/en/latest/catalog/catalog.metrics.llm_as_judge.direct.criteria.correctness_based_on_ground_truth.html
-# This is a workaround to avoid the following issue.
-# "correctness_base_on_ground_truth" post-process bug · Issue #7 · RYOKAWA/teigaku_genzei
-# https://github.ibm.com/RYOKAWA/teigaku_genzei/issues/7
+# Note: Using numeric option names ("3", "2", "1") instead of semantic names
+# ("correct", "partially correct", "incorrect") to work around a post-processing issue
+# with the original correctness_based_on_ground_truth criterion.
+# We observed that in the case of some judge models, 
+# unnecessary output (e.g., "The answer is correct") can be included. These should be removed and only "correct" 
+# should be left as the normalized output. However, the normalization operator MatchClosestOption,
+# or more specifically, difflib.get_close_matches() fails to do so when the three option names are similar,
+# and can be confused with different option name.
 
 def register(catalog_path: str) -> None:
 
