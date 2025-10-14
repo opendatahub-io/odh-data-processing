@@ -15,6 +15,10 @@ def is_qhead(text: str) -> bool:
 def is_ahead(text: str) -> bool:
     return re.match(r"^\[Ａ\]", text) is not None
 
+def read_json_file(file_path):
+    with open(file_path, 'r') as file:
+        data = json.load(file)
+    return data
 
 
 def write_jsonl_file(file_path: str, data_list: list[Any]):

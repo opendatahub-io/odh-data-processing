@@ -12,10 +12,6 @@ from typing import Any
 
 import json_util
 
-def read_json_file(file_path):
-    with open(file_path, 'r') as file:
-        data = json.load(file)
-    return data
 
 def get_text_block(text_list: list[Any], begin_pos: int, end_pos: int) -> str:
 
@@ -83,7 +79,7 @@ if __name__ == "__main__":
     input_file = sys.argv[1]
     output_file = sys.argv[2]
 
-    data = read_json_file(input_file)
+    data = json_util.read_json_file(input_file)
     qa_pairs = extract_qa_pairs(data)
     save_to_csv(qa_pairs, output_file)
 
