@@ -4,6 +4,7 @@ Command-line interface for subset selection.
 """
 
 import argparse
+import multiprocessing
 import sys
 
 from .subset_selection import subset_datasets
@@ -101,6 +102,13 @@ def parse_args():
 
 def main():
     """Main entry point for CLI."""
+    # Set multiprocessing start method for CUDA compatibility
+    try:
+        multiprocessing.set_start_method('spawn', force=True)
+    except RuntimeError:
+        # Already set, that's fine
+        pass
+    
     args = parse_args()
     
     # Parse subset sizes

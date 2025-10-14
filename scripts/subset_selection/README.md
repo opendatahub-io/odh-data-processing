@@ -11,11 +11,50 @@ The subset selection scripts use advanced machine learning techniques to identif
 
 ## Installation
 
-Install the required dependencies:
+### 1. Install PyTorch with CUDA Support
+
+For GPU usage (recommended), install PyTorch with CUDA support first:
+
+```bash
+# For CUDA 12.1+ (adjust based on your CUDA version)
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+```
+
+### 2. Install Other Dependencies
 
 ```bash
 pip install -r scripts/subset_selection/requirements.txt
 ```
+
+**Note:** The CLI automatically configures multiprocessing to use the 'spawn' method for CUDA compatibility, enabling efficient multi-GPU parallel processing.
+
+## Model Setup
+
+The default encoder (`Snowflake/snowflake-arctic-embed-l-v2.0`) needs to be available before running. Choose one of these options:
+
+### Option 1: Auto-download with Testing Mode (Recommended for First Run)
+
+Use `--testing-mode` to automatically download the model from HuggingFace:
+
+```bash
+python -m scripts.subset_selection.cli \
+  --input dataset.jsonl \
+  --subset-sizes "0.1" \
+  --testing-mode \
+  --output-dir output/
+```
+
+**Important:** Despite the name, `--testing-mode` **still uses all available GPUs** for processing. It simply allows automatic model downloading from HuggingFace and provides CPU fallback if no GPUs are detected. After the first run, the model is cached and you can omit this flag.
+
+### Option 2: Pre-download with ilab
+
+If you have `ilab` installed:
+
+```bash
+ilab model download --repository Snowflake/snowflake-arctic-embed-l-v2.0
+```
+
+The model will be cached at `~/.cache/instructlab/models/Snowflake/snowflake-arctic-embed-l-v2.0`
 
 ## Usage
 
@@ -51,7 +90,7 @@ python -m scripts.subset_selection.cli \
   --combine-files \
   --output-dir output/
 
-# Testing mode (no GPU required)
+# Testing mode (allows model auto-download, still uses GPUs if available)
 python -m scripts.subset_selection.cli \
   --input dataset.jsonl \
   --subset-sizes "0.1" \
@@ -73,7 +112,7 @@ Optional:
   --epsilon <float>              Optimization parameter (default: 160.0)
   --num-gpus <int>               Number of GPUs to use (default: auto-detect)
   --combine-files                Combine multiple input files before processing
-  --testing-mode                 Enable CPU mode for testing
+  --testing-mode                 Enable model auto-download and CPU fallback
   --encoder-type <str>           Encoder type (default: arctic)
   --encoder-model <str>          Model name (default: Snowflake/snowflake-arctic-embed-l-v2.0)
   --template-name <str>          Template name (default: conversation)
@@ -149,7 +188,7 @@ subset_datasets(
 - `encoder_type`: Type of encoder to use (default: "arctic")
 - `encoder_model`: Model name for the encoder
 - `instruction`: Custom instruction for embedding generation
-- `testing_mode`: Enable testing mode with CPU support (default: False)
+- `testing_mode`: Enable model auto-download from HuggingFace and CPU fallback (default: False)
 
 ### TemplateConfig Parameters
 
@@ -223,16 +262,67 @@ python -m scripts.subset_selection.cli \
 ls scripts/subset_selection/data/output/
 ```
 
+## Troubleshooting
+
+### CUDA Multiprocessing Errors
+
+The CLI automatically handles CUDA multiprocessing compatibility by setting the start method to 'spawn' (required on Linux). If you're using the Python API directly and encounter errors like:
+```
+RuntimeError: Cannot re-initialize CUDA in forked subprocess
+```
+
+Add this at the start of your script:
+```python
+import multiprocessing
+multiprocessing.set_start_method('spawn', force=True)
+```
+
+### Model Not Found Error
+
+If you see `Model not found in available models: Snowflake/snowflake-arctic-embed-l-v2.0`, you have two options:
+
+1. **Use `--testing-mode`** to auto-download from HuggingFace (still uses GPUs):
+   ```bash
+   python -m scripts.subset_selection.cli --input data.jsonl --subset-sizes "0.1" --testing-mode --output-dir output/
+   ```
+
+2. **Pre-download with ilab**:
+   ```bash
+   ilab model download --repository Snowflake/snowflake-arctic-embed-l-v2.0
+   ```
+
+### Memory Issues
+
+If you run out of GPU memory:
+- Reduce `--num-folds` to process larger chunks per GPU
+- Reduce `--num-gpus` to use fewer GPUs
+- For small datasets (<10k samples), use fewer folds (5-10)
+- The default batch size is optimized for A100 GPUs; adjust if needed
+
+### GPU Not Detected
+
+Verify CUDA is properly installed and accessible:
+```bash
+# Check GPU availability
+nvidia-smi
+
+# Check PyTorch CUDA
+python -c "import torch; print(f'CUDA available: {torch.cuda.is_available()}'); print(f'GPU count: {torch.cuda.device_count()}')"
+```
+
 ## Notes
 
 - **Dataset Size**: Subset selection is optimized for datasets >100k samples
   - For smaller datasets, adjust `--epsilon` and `--num-folds` accordingly
-- **GPU Requirement**: GPU acceleration is required for production use
-  - Use `--testing-mode` for CPU fallback (testing only, slower)
+- **GPU Requirement**: GPU acceleration is strongly recommended for production use
+  - The code automatically uses all available GPUs with parallel processing
+  - CPU fallback available with `--testing-mode` (much slower)
 - **Multiple GPUs**: Automatically detects and utilizes all available GPUs
+  - Uses 'spawn' multiprocessing method for CUDA compatibility
   - Override with `--num-gpus` flag if needed
 - **Memory**: Each fold processes independently, so more folds = less memory per fold
 - **Performance**: 
   - Larger epsilon values = faster but potentially lower quality
   - More folds = better GPU utilization but more overhead
+  - Multi-GPU processing scales linearly with the number of GPUs
 
