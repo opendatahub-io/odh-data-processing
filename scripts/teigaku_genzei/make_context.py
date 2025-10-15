@@ -84,7 +84,8 @@ def main()-> None:
     context_list = [header + compose_context(cast(int, section), df) for (section, df) in section_gp] + appendix
     section_list = [cast(int, section) for (section, df) in section_gp] + a_section
     qindex_list = [cast(int, df.index[0]) for (section, df) in section_gp] + a_qindex
-    qlist_list = [json.dumps(df.index.to_list()) for (section, df) in section_gp] + a_qindex
+    qlist_list = [json.dumps(df.index.to_list()) for (section, df) in section_gp] + [json.dumps([qi]) for qi in a_qindex]
+    # qlist_list = [json.dumps(df.index.to_list()) for (section, df) in section_gp] + a_qindex
     # for section, df in section_gp:
     #     print(section)
     #     print(df)
