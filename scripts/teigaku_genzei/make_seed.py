@@ -90,8 +90,7 @@ def main()-> None:
         ]
         context_icl_df = pd.concat(tmp_list, axis=0).reset_index(drop=True).drop(columns=["qindex"])
     else:
-        context_icl_df = pd.DataFrame()
-        argparse.ArgumentError(None, f"Invalid {ARG_JOIN_METHOD}: {opt_join_method}")
+        raise argparse.ArgumentError(None, f"Invalid {ARG_JOIN_METHOD}: {opt_join_method}")
     # schema
     # "document_outline": "...",
     # "document_title": "0024001-021.md",
