@@ -33,7 +33,7 @@ def config():
 def select_icl_sample(icl_df: pd.DataFrame, average_context_length: int, index: int) -> pd.Series:
     if icl_df.empty:
         raise ValueError("ICL sample DataFrame is empty.")
-    step = max(1, int(average_context_length))
+    step = max(1, average_context_length)
     idx = int(index)
     ret_index = (idx - step) % len(icl_df)
     return cast(pd.Series, icl_df.iloc[ret_index])
@@ -52,7 +52,7 @@ def main()-> None:
     output_context_path = args[ARG_OUTPUT_SEED_FILE]
     opt_join_method = args[ARG_JOIN_METHOD]
 
-    context_df = pd.read_csv(input_context_path, encoding="utf8")[["context"]]
+    context_df = pd.read_csv(input_context_path, encoding="utf8")[["context", "qindex"]]
     icl_list = json_util.read_jsonl_file(input_icl_path)
     icl_df = pd.DataFrame(icl_list)
 
@@ -63,11 +63,20 @@ def main()-> None:
         # Each ICL doc sample is taken from an answer of the FAQ document.
         # Contexts are also derived from the FAQ document.
         # We should avoid ICL samples that are too much similar to a context to be assigned to that context.
-        average_context_length = len(icl_list) / len(context_df)
-        assigned_icl_df = context_df.apply(lambda x: select_icl_sample(icl_df, int(average_context_length), x["qindex"]), axis=1)
+        # average_context_length = len(icl_list) / len(context_df)
+        # assigned_icl_df = context_df.apply(lambda x: select_icl_sample(icl_df, int(average_context_length), x["qindex"]), axis=1)
+        if len(context_df) == 0:
+            raise ValueError("No contexts loaded.")
+        if len(icl_df) == 0:
+            raise ValueError("No ICL samples loaded.")
+        average_context_length = round(len(icl_df) / len(context_df))
+        assigned_icl_df = context_df.apply(
+            lambda x: select_icl_sample(icl_df, int(average_context_length), int(x["qindex"])),
+            axis=1,
+        )
         context_icl_df = pd.concat([
             assigned_icl_df,
-            context_df, 
+            context_df.drop(columns=["qindex"]), 
         ], axis=1)
     elif opt_join_method == OPT_JOIN_METHOD_CARTESIAN:
         # TODO:
@@ -79,7 +88,7 @@ def main()-> None:
                 pd.DataFrame(sr.to_dict(), index=icl_df.index), 
             ], axis=1) for (idx, sr) in context_df.iterrows()
         ]
-        context_icl_df = pd.concat(tmp_list, axis=0).reset_index(drop=True)
+        context_icl_df = pd.concat(tmp_list, axis=0).reset_index(drop=True).drop(columns=["qindex"])
     else:
         context_icl_df = pd.DataFrame()
         argparse.ArgumentError(None, f"Invalid {ARG_JOIN_METHOD}: {opt_join_method}")
