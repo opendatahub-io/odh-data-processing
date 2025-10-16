@@ -37,7 +37,6 @@ Please download these two PDF files by yourself.
     - GitHub - Red-Hat-AI-Innovation-Team/sdg_hub: Synthetic Data Generation Toolkit for LLMs
     - https://github.com/Red-Hat-AI-Innovation-Team/sdg_hub
     - Install sdg_hub tool by following README of sdg_hub.
-        - TODO: confirm that the tools work in the stable release. I only tested older development version.
     - In particular, you need `docparser_v2.py` in  `examples/knowledge_tuning/instructlab/docparser_v2.py`. 
         - This is a wrapper of Docling.
 ## Procedure
@@ -46,6 +45,7 @@ Please download these two PDF files by yourself.
 - Run `docparser_v2.py` using the following command.
     - `./parser.sh`
     - You will see the texts extracted from the PDF are stored in `docparser/` directory.
+    - Note: we assume that  `sdg_hub/` (the clone of the sdg_hub repository) exists next to `teigaku_genzei/`. If not, please fix `code_path` in `parser.sh` appropriately.
 - Extract the QA pairs and the glossary from the JSON file in the above directory by the following command.
     - `./extract_qa.sh`
     - You will see that there are 2 x 2 = 4 CSV files in `qa_table/` directory. 
