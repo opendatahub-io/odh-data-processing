@@ -31,8 +31,12 @@ def config():
     return vars(args)
 
 def select_icl_sample(icl_df: pd.DataFrame, average_context_length: int, index: int) -> pd.Series:
-    ret_index = (index - average_context_length) % len(icl_df)
-    return cast(pd.Series, icl_df.loc[ret_index])
+    if icl_df.empty:
+        raise ValueError("ICL sample DataFrame is empty.")
+    step = max(1, int(average_context_length))
+    idx = int(index)
+    ret_index = (idx - step) % len(icl_df)
+    return cast(pd.Series, icl_df.iloc[ret_index])
 
 def compose_seed(df: pd.DataFrame) -> pd.DataFrame:
     return df
