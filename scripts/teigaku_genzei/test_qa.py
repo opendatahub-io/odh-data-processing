@@ -50,7 +50,7 @@ ARG_API_URL: str = "api_url"
 ARG_API_KEY: str = "api_key"
 ARG_SERVER_TYPE: str = "server_type"
 ARG_DATA_CLASSIFICATION: str = "data_classification"
-ARG_INSTRUCTION: str ="instructtion"
+ARG_INSTRUCTION: str = "instruction"
 ARG_PREDICTION_FILE: str = "prediction_file"
 ARG_PREDICTION_ONLY: str = "prediction_only"
 
