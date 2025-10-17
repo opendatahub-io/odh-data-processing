@@ -1,8 +1,8 @@
 #!/bin/sh
 
 if [ -z "$1" ]; then
-    echo "./test_single.sh {model_path}"
-    echo "e.g., ./test_all.sh path_to/granite-3.3-8b-instruct-teigaku-genzei-interp"
+    echo "./test_single_vllm.sh {model_path}"
+    echo "e.g., ./test_single_vllm.sh path_to/granite-3.3-8b-instruct-teigaku-genzei-interp"
     exit 1
 fi
 MODEL_TEST_PATH="$1" # /proj/instructlab/checkpoints/${MODEL_TEST_NAME}
