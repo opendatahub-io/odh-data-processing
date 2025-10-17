@@ -22,6 +22,11 @@ def conv_seed_to_cqa(seed: Any) -> dict[str, Any]:
     return cqa_obj
 
 def main() -> None:
+
+    if len(sys.argv) < 3:
+        print("Usage: seed_jsonl_2_qna_yaml.py <input_seed.jsonl> <output_qna.yaml>")
+        sys.exit(1)
+    
     input_file = sys.argv[1]  # seed.jsonl
     output_file = sys.argv[2]  # qna.yaml
 
