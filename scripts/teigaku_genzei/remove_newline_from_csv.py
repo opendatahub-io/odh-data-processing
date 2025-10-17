@@ -1,3 +1,10 @@
+"""
+Remove newline characters from all object-typed columns in a CSV file.
+
+Usage:
+    python remove_newline_from_csv.py <input_csv> <output_csv>
+"""
+
 import sys
 import pandas as pd
 
@@ -20,6 +27,9 @@ def main():
 
     except FileNotFoundError as e:
         print(f"Error: File not found - {e}", file=sys.stderr)
+        sys.exit(1)
+    except pd.errors.ParserError as e:
+        print(f"Error parsing CSV: {e}", file=sys.stderr)
         sys.exit(1)
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
