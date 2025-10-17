@@ -148,7 +148,9 @@ def compute_additional_stats(results_df: pd.DataFrame, global_df: pd.DataFrame, 
     ]
     # Compute biased score
     biased_score_sr_list = [
-        results_df[f"{criterion}_positional_bias_selected_option"].apply(lambda x: option_map[x])
+        results_df[f"{criterion}_positional_bias_selected_option"].apply(
+            lambda x, mapping=option_map: mapping[x]
+        )
         for (criterion, option_map) in zip(criteria_list, option_map_list)
     ]
     cbiased_score_sr_list: list[pd.Series] = [cast(pd.Series, sr) for sr in biased_score_sr_list]
