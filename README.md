@@ -34,6 +34,26 @@ We welcome issues and pull requests. Please:
 - For pipeline/component changes, recompile the pipeline and update generated YAML if applicable.
 - Keep parameter names and docs consistent between code and README.
 
+## Quality & CI
+
+This repo enforces Python style and clean notebooks via **pre-commit** and a GitHub Actions workflow.
+
+**What runs:**
+- **Ruff** (lint, autofixes)
+- **Black** (format)
+- **isort** (import order, Black profile)
+- **nbstripout** (removes Jupyter outputs)
+
+**Where it runs:**
+- On every **Pull Request**
+- Once **post-merge** to `main` (final validation)
+
+**Quick start (local):**
+```bash
+pip install pre-commit
+pre-commit install               # installs the git hook
+pre-commit run --all-files       # run all checks on the repo
+
 ## 📄 License
 
 Apache License 2.0

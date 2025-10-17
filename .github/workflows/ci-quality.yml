@@ -1,0 +1,53 @@
+name: Pre-commit checks
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - "**/*.py"
+      - "**/*.ipynb"
+      - ".pre-commit-config.yaml"
+      - "pyproject.toml"
+  pull_request_target:
+    types: [closed]
+    paths:
+      - "**/*.py"
+      - "**/*.ipynb"
+      - ".pre-commit-config.yaml"
+      - "pyproject.toml"
+
+concurrency:
+  group: pre-commit-${{ github.ref }}z
+  cancel-in-progress: true
+
+jobs:
+  pre-commit:
+    if: github.event_name != 'pull_request_target' || github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # For pull_request_target on forks, ensure we check out the merge commit or default branch safely
+          ref: ${{ github.event.pull_request.head.sha || github.ref }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Cache pre-commit envs
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
+
+      - name: Install pre-commit
+        run: pip install pre-commit
+
+      - name: Run pre-commit
+        uses: pre-commit/action@v3.0.1
+        with:
+          extra_args: --all-files --show-diff-on-failure
