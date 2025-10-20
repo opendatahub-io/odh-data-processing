@@ -34,7 +34,7 @@ We welcome issues and pull requests. Please:
 - For pipeline/component changes, recompile the pipeline and update generated YAML if applicable.
 - Keep parameter names and docs consistent between code and README.
 
-## Quality & CI
+### Quality & CI
 
 This repo enforces Python style and clean notebooks via **pre-commit** and a GitHub Actions workflow.
 
