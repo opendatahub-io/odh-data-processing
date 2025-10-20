@@ -67,4 +67,4 @@ if __name__ == "__main__":
     qa_pairs = extract_glossary(data)
     save_to_csv(qa_pairs, output_file)
 
-    print(f"QA pairs have been successfully saved to {output_file}")
+    print(f"Glossary pairs have been successfully saved to {output_file}")
