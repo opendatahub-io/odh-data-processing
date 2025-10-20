@@ -29,7 +29,7 @@ def get_text_block(text_list: list[Any], begin_pos: int, end_pos: int) -> str:
     # For page numbers.
     #   obj["content_layer"] == "furniture" and obj["label"] == "page_footer"
     # For document body texts.
-    #   obj["content_layer"] == "body" and obj["label"] == "text" pr "list_item"
+    #   obj["content_layer"] == "body" and obj["label"] == "text" or "list_item"
     # For 問 and [Ａ] (the first line) and section headers like 【各人別控除事績簿】
     #   obj["content_layer"] == "body" and obj["label"] == "section_header"
     # For title like 11ー１  各人別控除事績簿の作成の要否
