@@ -34,4 +34,3 @@ def read_jsonl_file(file_path: str) -> list[Any]:
             json.loads(line) for line in file
         ]
         return data_list
-    return []
