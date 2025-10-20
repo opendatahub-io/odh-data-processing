@@ -8,14 +8,14 @@ def extract_icl(obj: dict[str, Any], keys: list[str]) -> dict[str, Any]:
     ret = {key: obj[key] for key in keys}
     return ret
 
-def compute_dict_hash(obj: dict[str, str], keys: list[str]) -> int:
+def compute_dict_hash(obj: dict[str, str], keys: list[str]) -> str:
     value_list = [obj[k] for k in keys]
-    value_hash = "::".join(value_list).__hash__()
+    value_hash = "::".join(value_list)
     return value_hash
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
-        print("Usage: python script.py <input_jsonl_file> <output_jsonl_file>")
+        print("Usage: python extract_icl_from_seed.py <input_jsonl_file> <output_jsonl_file>")
         sys.exit(1)
 
     input_file_path = sys.argv[1]
@@ -46,7 +46,7 @@ if __name__ == "__main__":
     hash_list = [
         (compute_dict_hash(obj, selected_keys), obj) for obj in icl_list
     ]
-    unique_icl_dict = {
+    unique_icl_dict: dict[str, dict[str, Any]] = {
         h: obj for (h, obj) in hash_list
     }
     # TODO: collect only a unique set of ICLs.
