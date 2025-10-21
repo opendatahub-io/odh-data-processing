@@ -38,9 +38,9 @@ pull_request_rules:
           ✅ **CI checks passed:** All
           
           **Approved by:**
-+          {% for login in approved_reviews_by %}
-+           - @{{ login }}
-           {% endfor %}
+          {% for login in approved_reviews_by %}
+          - @{{ login }}
+          {% endfor %}
 
   - name: ping author on conflicts
     conditions:
