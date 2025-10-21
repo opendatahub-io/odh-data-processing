@@ -47,8 +47,6 @@ pull_request_rules:
       - "conflict"
       - "-closed"
     actions:
-      label:
-        add: ["needs-rebase"]
       comment:
         message: |
           🔀 **Merge Conflict Detected**
@@ -57,12 +55,3 @@ pull_request_rules:
           @{{ author.login }} please rebase your branch.
           
           [Syncing a Fork Guide](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/syncing-a-fork)
-
-  - name: remove 'needs-rebase' label when conflict is resolved
-    conditions:
-      - "-conflict"
-      - "-closed" 
-      - "label=needs-rebase"
-    actions:
-      label:
-        remove: ["needs-rebase"]
