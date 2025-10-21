@@ -12,7 +12,7 @@ pull_request_rules:
       - "#approved-reviews-by-codeowner>=1"    # CODEOWNER must approve
       
       # Add flexible check for all workflows:
-      - "check-failure=false"              # No failing checks allowed   
+      - "-check-failure"              # No failing checks allowed   
 
       # PR must be ready for merge
       - "-draft"                               # Not a draft
@@ -34,13 +34,13 @@ pull_request_rules:
         message: |
           🎉 **Auto-merged successfully!**
           
-          ✅ **All reviewers approved:** {{ approved_reviews | length }}
+          ✅ **All reviewers approved:** {{ approved_reviews_by | length }}
           ✅ **CI checks passed:** All
           
           **Approved by:**
-          {% for review in approved_reviews %}
-          - @{{ review.user.login }}
-          {% endfor %}
++          {% for login in approved_reviews_by %}
++           - @{{ login }}
+           {% endfor %}
 
   - name: ping author on conflicts
     conditions:
