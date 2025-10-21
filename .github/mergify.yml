@@ -1,0 +1,68 @@
+# .mergify.yml - Configuration for "All Reviewers Must Approve"
+# Perfect for new teams wanting thorough review process
+
+pull_request_rules:
+  # PRIMARY MERGE RULE: Single comprehensive rule for auto-merge
+  - name: Auto-merge when ALL conditions met
+    conditions:
+      # ALL assigned reviewers must approve
+      - "#approved-reviews-by>=1"              # At least one approval
+      - "#changes-requested-reviews-by=0"      # No outstanding change requests
+      - "#review-requested=0"                  # No pending review requests
+      - "#approved-reviews-by-codeowner>=1"    # CODEOWNER must approve
+      
+      # Add flexible check for all workflows:
+      - "check-success-or-neutral=true"          # Any success or neutral status is enough
+      
+      # PR must be ready for merge
+      - "-draft"                               # Not a draft
+      - "base=main"                           # Targeting main branch
+      - "label!=do-not-merge"                 # No blocking labels
+      - "label!=breaking-change"              # Important - requires special handling
+      
+      # Technical requirements
+      - "-conflict"                           # No merge conflicts
+
+    actions:
+      merge:
+        method: squash
+        commit_message_template: |
+          {{ title }} (#{{ number }})
+          
+          {{ body.split('Description')[0].strip() if body else '' }}
+      comment:
+        message: |
+          🎉 **Auto-merged successfully!**
+          
+          ✅ **All reviewers approved:** {{ approved_reviews | length }}
+          ✅ **CI checks passed:** All
+          
+          **Approved by:**
+          {% for review in approved_reviews %}
+          - @{{ review.user.login }}
+          {% endfor %}
+
+  - name: ping author on conflicts and add 'needs-rebase' label
+    conditions:
+      - "conflict"
+      - "-closed"
+    actions:
+      label:
+        add: ["needs-rebase"]
+      comment:
+        message: |
+          🔀 **Merge Conflict Detected**
+          
+          This pull request has merge conflicts that must be resolved before it can be merged.
+          @{{ author.login }} please rebase your branch.
+          
+          [Syncing a Fork Guide](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/syncing-a-fork)
+
+  - name: remove 'needs-rebase' label when conflict is resolved
+    conditions:
+      - "-conflict"
+      - "-closed" 
+      - "label=needs-rebase"
+    actions:
+      label:
+        remove: ["needs-rebase"]
