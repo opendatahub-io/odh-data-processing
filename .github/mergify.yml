@@ -51,6 +51,6 @@ pull_request_rules:
           🔀 **Merge Conflict Detected**
           
           This pull request has merge conflicts that must be resolved before it can be merged.
-          @{{ author.login }} please rebase your branch.
+          @{{ author }} please rebase your branch.
           
           [Syncing a Fork Guide](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/syncing-a-fork)
