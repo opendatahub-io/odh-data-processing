@@ -12,8 +12,8 @@ pull_request_rules:
       - "#approved-reviews-by-codeowner>=1"    # CODEOWNER must approve
       
       # Add flexible check for all workflows:
-      - "check-success-or-neutral=true"          # Any success or neutral status is enough
-      
+      - "check-failure=false"              # No failing checks allowed   
+
       # PR must be ready for merge
       - "-draft"                               # Not a draft
       - "base=main"                           # Targeting main branch
