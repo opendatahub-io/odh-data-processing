@@ -53,10 +53,6 @@ def extract_section_number(title: str) -> tuple[int, int]:
 
 def main()-> None:
 
-    # if len(sys.argv) != 5:
-    #     print("Usage: python script.py <option> <input_qa.csv> <input_glossary.csv> <output_context.csv")
-    #     sys.exit(1)
-
     args = config()
 
     option = args[ARG_OPTION]
