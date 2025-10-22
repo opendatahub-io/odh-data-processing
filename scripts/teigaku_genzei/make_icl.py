@@ -40,17 +40,16 @@ def config():
     
     return args
 
-def generate_QA_combinations(row_sr: pd.Series, qa_df: pd.DataFrame, size: int)-> list[tuple[int, list[int]]]:
+def generate_QA_combinations(row_sr: pd.Series, size: int)-> list[tuple[int, list[int]]]:
     q_list = cast(list[int], json.loads(row_sr["qlist"]))
     if len(q_list) >= size:
         comb_triples = itertools.combinations(q_list, size)
         comb_triples_list = [(cast(int, row_sr.name), list(comb)) for comb in comb_triples]
         return comb_triples_list
-    elif len(q_list) > 0:
+    if len(q_list) > 0:
         comb_triples_list = [(cast(int, row_sr.name), (q_list + [q_list[0]] * (size - len(q_list))))]
         return comb_triples_list
-    else:
-        return []
+    return []
 
 def compose_short_context(qa_df: pd.DataFrame, section_index: int, qa_index: list[int])-> str:
     sub_qa_df = qa_df.loc[qa_index]
@@ -100,7 +99,7 @@ def main()-> None:
     context_df = pd.read_csv(input_context_path, encoding="utf8")
     ncontext_df = context_df.query("section != -1")
     
-    icl_qa_index_sr = ncontext_df.apply(lambda row: generate_QA_combinations(row, qa_df, NUM_ICL_QA_EXAMPLES), axis=1)
+    icl_qa_index_sr = ncontext_df.apply(lambda row: generate_QA_combinations(row, NUM_ICL_QA_EXAMPLES), axis=1)
     flatten_icl_qa_index_list = list(itertools.chain.from_iterable(icl_qa_index_sr))
     icl_list = [generate_ICL_example(index_tuple, qa_df, ncontext_df, short_context) for index_tuple in flatten_icl_qa_index_list]
 
