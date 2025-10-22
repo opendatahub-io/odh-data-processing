@@ -313,7 +313,7 @@ def main():
         jsonl_util.write_jsonl_file(predictions_file, predictions_new)
         print("Wrote predictions to", predictions_file)
     if is_prediction_only:
-        exit()
+        sys.exit(0)
 
     predictions = predictions_new if predictions_new is not None else predictions_loaded
     # print(predictions)
