@@ -9,12 +9,12 @@ import json_util
 
 from context_util import compose_context, compose_glossary
 
-# TODO: input: qa.csv
-# TODO: input: glossary.csv
-# TODO: output: context.csv
+# input: qa.csv
+# input: glossary.csv
+# output: context.csv
 
-# TODO: extract section numbers
-# TODO: collect entries of same section numbers.
+# extract section numbers
+# collect entries of same section numbers.
 
 ARG_OPTION="glossary_option"
 ARG_INPUT_QA_FILE="qa_file"
@@ -25,7 +25,6 @@ OPT_GLOSSARY_HEADER="header"
 OPT_GLOSSARY_NONE="none"
 
 def config():
-    # print("Usage: python script.py <option> <input_qa.csv> <input_glossary.csv> <output_context.csv")
     parser = argparse.ArgumentParser(description="Make context data from QAs and glossaries.")
     parser.add_argument(
         '--' + ARG_OPTION, 
@@ -66,7 +65,6 @@ def main()-> None:
     section_df = qa_df.apply(lambda x: pd.Series(extract_section_number(x["Title"]), index=["section", "subsection"]), axis=1)
     qas_df = pd.concat([qa_df, section_df], axis=1)
     section_gp = qas_df.groupby("section")
-    # context_df = section_gp.agg(lambda df: compose_context(1, df))
     glossary_str = "用語集\n" + compose_glossary(glossary_df) + "\n\n"
 
     (header, appendix, a_section, a_qindex) = (
@@ -78,15 +76,9 @@ def main()-> None:
     section_list = [cast(int, section) for (section, df) in section_gp] + a_section
     qindex_list = [cast(int, df.index[0]) for (section, df) in section_gp] + a_qindex
     qlist_list = [json.dumps(df.index.to_list()) for (section, df) in section_gp] + [json.dumps([qi]) for qi in a_qindex]
-    # qlist_list = [json.dumps(df.index.to_list()) for (section, df) in section_gp] + a_qindex
-    # for section, df in section_gp:
-    #     print(section)
-    #     print(df)
     out_df = pd.DataFrame({"section": section_list, "qindex": qindex_list ,"qlist": qlist_list, "context": context_list})
-    # out_df = context_df
     out_df.to_csv(output_context_path, index=False, encoding="utf8")
 
-    return
 
 if __name__ == "__main__":
 
