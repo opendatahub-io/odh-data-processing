@@ -86,16 +86,8 @@ def config():
     
     return args
 
-def load_test_data(input_file: str, test_language: str) ->  list[dict[Hashable, Any]]: # list[dict[str, str]]:
-    # data = [
-    #     {"Title":"1-1", "Question": "What is the capital of Texas?", "Answer": "Austin"},
-    #     {"Title":"1-2", "Question": "What is the color of the sky?", "Answer": "Blue"},
-    # ]
-    orig_data_df = pd.read_csv(input_file, encoding="utf8", dtype="object")
-    # lang_df = pd.DataFrame({COL_LANGUAGE: test_language}, index=orig_data_df.index)
-    # data_df = pd.concat([orig_data_df, lang_df], axis=1)
-    data_df = orig_data_df
-    print(data_df)
+def load_test_data(input_file: str, test_language: str) ->  list[dict[Hashable, Any]]:
+    data_df = pd.read_csv(input_file, encoding="utf8", dtype="object")
     data = data_df.to_dict("records")
     return data
 
