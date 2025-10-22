@@ -48,8 +48,6 @@ def extract_section_number(title: str) -> tuple[int, int]:
     if match is not None:
         section_num_str = match.group(1)
         subsection_num_str = match.group(2)
-        print(section_num_str)
-        print(subsection_num_str)
         return (int(section_num_str), int(subsection_num_str))
     return (0, 0)
 
