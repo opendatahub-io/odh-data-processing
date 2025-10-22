@@ -32,10 +32,11 @@ class LLMJudgeDirectPositionalBias(LLMJudgeDirect):
 
         results = super().compute(references, predictions, task_data)
 
-        forward_score_name = self.criteria.name
-        backward_score_name = self.criteria.name + LLMJudgeDirectPositionalBias.POSTFIX_SCORE
-        average_score_name = self.criteria.name + LLMJudgeDirectPositionalBias.POSTFIX_AVERAGE
-        backward_selected_option_name = self.criteria.name + LLMJudgeDirectPositionalBias.POSTFIX_SELECTED_OPTION
+        score_name = self.criteria.name if self.criteria is not None else self.main_score
+        forward_score_name = score_name
+        backward_score_name = score_name + LLMJudgeDirectPositionalBias.POSTFIX_SCORE
+        average_score_name = score_name + LLMJudgeDirectPositionalBias.POSTFIX_AVERAGE
+        backward_selected_option_name = score_name + LLMJudgeDirectPositionalBias.POSTFIX_SELECTED_OPTION
 
         if self.criteria is not None:
             self.ci_scores = [
@@ -47,7 +48,7 @@ class LLMJudgeDirectPositionalBias(LLMJudgeDirect):
             self.reduction_map = {"mean": [self.main_score] + self.ci_scores}
 
         pb_scores = [
-            self.criteria.option_map[result[backward_selected_option_name]] 
+            self.criteria.option_map.get(result.get(backward_selected_option_name, "NO_RESULT"), 1)
             if (self.criteria is not None) and (self.criteria.option_map is not None) else 1
             for result in results
         ]
