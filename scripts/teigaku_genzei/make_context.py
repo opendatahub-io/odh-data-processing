@@ -64,7 +64,6 @@ def main()-> None:
     glossary_df = pd.read_csv(input_glossary_path, encoding="utf8")
 
     section_df = qa_df.apply(lambda x: pd.Series(extract_section_number(x["Title"]), index=["section", "subsection"]), axis=1)
-    print(section_df)
     qas_df = pd.concat([qa_df, section_df], axis=1)
     section_gp = qas_df.groupby("section")
     # context_df = section_gp.agg(lambda df: compose_context(1, df))
