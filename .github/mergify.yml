@@ -1,5 +1,4 @@
-# .mergify.yml - Configuration for "All Reviewers Must Approve"
-# Perfect for new teams wanting thorough review process
+# .mergify.yml defines the rules for merging pull requests.
 
 pull_request_rules:
   # PRIMARY MERGE RULE: Single comprehensive rule for auto-merge
