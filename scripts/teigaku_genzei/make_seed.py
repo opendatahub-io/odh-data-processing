@@ -16,9 +16,9 @@ OPT_JOIN_METHOD_SLIDE="slide"
 
 def config():
     parser = argparse.ArgumentParser(description='make a seed sample file from contexts and ICL samples')
-    parser.add_argument('--' + ARG_INPUT_CONTEXT_FILE, type=str, default=None)
-    parser.add_argument('--' + ARG_INPUT_ICL_FILE, type=str, default=None)
-    parser.add_argument('--' + ARG_OUTPUT_SEED_FILE, type=str, default=None)
+    parser.add_argument('--' + ARG_INPUT_CONTEXT_FILE, type=str, required=True)
+    parser.add_argument('--' + ARG_INPUT_ICL_FILE, type=str, required=True)
+    parser.add_argument('--' + ARG_OUTPUT_SEED_FILE, type=str, required=True)
     parser.add_argument(
         '--' + ARG_JOIN_METHOD, 
         type=str, 
