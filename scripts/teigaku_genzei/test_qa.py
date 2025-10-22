@@ -128,32 +128,6 @@ def write_results_csv(output_file: str, results: EvaluationResults) -> None:
     out_df.to_csv(output_file, encoding="utf8", index=False)
     return
 
-def compute_additional_stats(results_df: pd.DataFrame, global_df: pd.DataFrame, criteria_list: list[str]) -> tuple[pd.DataFrame, pd.DataFrame]:
-
-    # TODO:
-    # Get the mapping from the choice to the score?
-    # -> {criteria_name}_criteria column in the result contains a JSON string with a field "option_map".
-    # -> All the samples have the same value in this column.
-    option_map_list = [
-        json.loads(cast(str, results_df[f"{criterion}_criteria"][0]))["option_map"]
-        for criterion in criteria_list
-    ]
-    # Compute biased score
-    biased_score_sr_list = [
-        results_df[f"{criterion}_positional_bias_selected_option"].apply(
-            lambda x, mapping=option_map: mapping[x]
-        )
-        for (criterion, option_map) in zip(criteria_list, option_map_list)
-    ]
-    cbiased_score_sr_list: list[pd.Series] = [cast(pd.Series, sr) for sr in biased_score_sr_list]
-    nbiased_score_sr_list = [
-        sr.rename(cast(str, sr.name).replace("_positional_bias_selected_option", "_positional_bias_score")) 
-        for sr in cbiased_score_sr_list
-    ]
-    # Compute biased score average
-    # Include those into the result and the global result
-    # TODO: confidence interval.
-    return (results_df, global_df)
 
 def get_lm_as_a_judge_metrics_list(judge_name: str, criteria: dict[str, str]) -> list[str]:
     lmaaj_metrics = [ 
