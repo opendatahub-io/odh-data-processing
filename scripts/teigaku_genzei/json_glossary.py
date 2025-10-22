@@ -57,7 +57,7 @@ def save_to_csv(qa_pairs, output_file):
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
-        print("Usage: python script.py <input_json_file> <output_csv_file>")
+        print("Usage: python json_glossary.py <input_json_file> <output_csv_file>")
         sys.exit(1)
 
     input_file = sys.argv[1]
