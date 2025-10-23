@@ -48,7 +48,6 @@ if __name__ == "__main__":
     unique_icl_dict: dict[str, dict[str, Any]] = {
         h: obj for (h, obj) in hash_list
     }
-    # TODO: collect only a unique set of ICLs.
     unique_icl_list = [obj for (_, obj) in unique_icl_dict.items()]
 
     print(len(unique_icl_list))
