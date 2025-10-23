@@ -1,6 +1,5 @@
 import sys
-from typing import cast, Any, Hashable, Sequence, Collection
-import pandas as pd
+from typing import cast, Any
 
 import json_util
 
