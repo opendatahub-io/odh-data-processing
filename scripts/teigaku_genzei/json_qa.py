@@ -47,7 +47,7 @@ def extract_qa_pairs(data):
     #ー
     title_pos_list = [ti for (ti, title) in title_list]
     qhead_pos_list = [qi for (qi, qhead) in qhead_list]
-    ahead_pos_list = [ai for (ai, qhead) in ahead_list]
+    ahead_pos_list = [ai for (ai, ahead) in ahead_list]
     atail_pos_list = [i for i in title_pos_list][1:] + [len(text_list)]
     # print(title_pos_list)
     # print(qhead_pos_list)
