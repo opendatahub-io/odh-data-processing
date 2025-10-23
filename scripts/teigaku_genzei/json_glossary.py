@@ -41,9 +41,6 @@ def extract_glossary(data):
     for ti in term_pos_list:
         term = text_list[ti]["text"]
         desc = get_desc_block(text_list, ti)
-        print(ti, term)
-        # print(question)
-        # print(answer)
         if len(desc) > 0:
             glossary_list.append((term, desc))
     return glossary_list
