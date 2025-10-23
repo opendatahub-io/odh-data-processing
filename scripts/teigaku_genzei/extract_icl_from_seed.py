@@ -1,7 +1,7 @@
 import sys
 from typing import cast, Any
 
-import json_util
+import jsonl_util
 
 def extract_icl(obj: dict[str, Any], keys: list[str]) -> dict[str, Any]:
     ret = {key: obj[key] for key in keys}
@@ -20,7 +20,7 @@ if __name__ == "__main__":
     input_file_path = sys.argv[1]
     output_file_path = sys.argv[2]
 
-    data_list = json_util.read_jsonl_file(input_file_path)
+    data_list = jsonl_util.read_jsonl_file(input_file_path)
 
     print(len(data_list))
     print(data_list[0])
@@ -52,5 +52,5 @@ if __name__ == "__main__":
 
     print(len(unique_icl_list))
 
-    json_util.write_jsonl_file(output_file_path, unique_icl_list)
+    jsonl_util.write_jsonl_file(output_file_path, unique_icl_list)
 

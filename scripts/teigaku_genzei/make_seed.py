@@ -5,7 +5,7 @@ from typing import cast, Any, Hashable, Sequence, Collection
 import json
 import pandas as pd
 
-import json_util
+import jsonl_util
 
 ARG_INPUT_CONTEXT_FILE="context_file"
 ARG_INPUT_ICL_FILE="icl_file"
@@ -53,7 +53,7 @@ def main()-> None:
     opt_join_method = args[ARG_JOIN_METHOD]
 
     context_df = pd.read_csv(input_context_path, encoding="utf8")[["context", "qindex"]]
-    icl_list = json_util.read_jsonl_file(input_icl_path)
+    icl_list = jsonl_util.read_jsonl_file(input_icl_path)
     icl_df = pd.DataFrame(icl_list)
 
     if opt_join_method == OPT_JOIN_METHOD_SLIDE:

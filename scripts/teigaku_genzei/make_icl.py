@@ -5,7 +5,7 @@ import argparse
 import pandas as pd
 import itertools
 
-import json_util
+import jsonl_util
 import context_util
 
 ARG_OPTION="glossary_option"
@@ -103,7 +103,7 @@ def main()-> None:
     flatten_icl_qa_index_list = list(itertools.chain.from_iterable(icl_qa_index_sr))
     icl_list = [generate_ICL_example(index_tuple, qa_df, ncontext_df, short_context) for index_tuple in flatten_icl_qa_index_list]
 
-    json_util.write_jsonl_file(output_icl_path, icl_list)
+    jsonl_util.write_jsonl_file(output_icl_path, icl_list)
 
     # TODO: 
     # Support for glossary-type context.

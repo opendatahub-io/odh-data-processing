@@ -2,7 +2,7 @@ from typing import Any
 import sys
 import yaml
 # import csv
-import json_util
+import jsonl_util
 
 
 
@@ -30,7 +30,7 @@ def main() -> None:
     input_file = sys.argv[1]  # seed.jsonl
     output_file = sys.argv[2]  # qna.yaml
 
-    seed_list = json_util.read_jsonl_file(input_file)
+    seed_list = jsonl_util.read_jsonl_file(input_file)
     cqa_list = [conv_seed_to_cqa(seed) for seed in seed_list]
 
     qna_template_dict = {
