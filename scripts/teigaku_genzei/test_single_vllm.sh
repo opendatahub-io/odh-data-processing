@@ -28,7 +28,7 @@ TEST_DIR=./qa_table
 TEST_NAMES="0024001-021"
 OUT_DIR=./tmp/single_${JUDGE_MODULE}__${MODEL_TEST_NAME}
 
-mkdir ${OUT_DIR}
+mkdir -p ${OUT_DIR}
 
 for TEST in ${TEST_NAMES}; do
     TEST_FILE=${TEST_DIR}/${TEST}.csv
