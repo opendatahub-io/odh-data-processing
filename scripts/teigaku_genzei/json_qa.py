@@ -43,24 +43,15 @@ def extract_qa_pairs(data):
     title_list = filter(lambda x: json_util.is_title(x[1]["text"]), enumerate(text_list))
     qhead_list = filter(lambda x: json_util.is_qhead(x[1]["text"]), enumerate(text_list))
     ahead_list = filter(lambda x: json_util.is_ahead(x[1]["text"]), enumerate(text_list))
-    #－
-    #ー
     title_pos_list = [ti for (ti, title) in title_list]
     qhead_pos_list = [qi for (qi, qhead) in qhead_list]
     ahead_pos_list = [ai for (ai, ahead) in ahead_list]
     atail_pos_list = title_pos_list[1:] + [len(text_list)]
-    # print(title_pos_list)
-    # print(qhead_pos_list)
-    # print(ahead_pos_list)
-    # print(atail_pos_list)
 
     for (ti, qhi, ahi, ati) in zip(title_pos_list, qhead_pos_list, ahead_pos_list, atail_pos_list):
         title = text_list[ti]["text"]
         question = get_text_block(text_list, qhi, ahi)
         answer = get_text_block(text_list, ahi, ati)
-        print(ti, title)
-        # print(question)
-        # print(answer)
         qa_pairs.append((title, question, answer))
     return qa_pairs
 
