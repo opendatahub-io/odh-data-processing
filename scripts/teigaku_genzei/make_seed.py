@@ -38,8 +38,6 @@ def select_icl_sample(icl_df: pd.DataFrame, average_context_length: int, index: 
     ret_index = (idx - step) % len(icl_df)
     return cast(pd.Series, icl_df.iloc[ret_index])
 
-def compose_seed(df: pd.DataFrame) -> pd.DataFrame:
-    return df
     
 def main()-> None:
 
