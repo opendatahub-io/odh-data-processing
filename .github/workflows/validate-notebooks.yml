@@ -5,12 +5,12 @@ on:
     types: [opened, synchronize, reopened]
     paths:
       - "notebooks/**/*.ipynb"
-      - ".github/workflows/validate.yml"
+      - ".github/workflows/validate-notebooks.yml"
   push:
     branches: [ main ]
     paths:
       - "notebooks/**/*.ipynb"
-      - ".github/workflows/validate.yml"
+      - ".github/workflows/validate-notebooks.yml"
 
 permissions:
   contents: read

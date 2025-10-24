@@ -80,9 +80,16 @@ runs:
           if command -v find >/dev/null 2>&1; then
             # Use find for better pattern matching
             PATTERN="${{ inputs.files }}"
-            # Convert glob pattern to find-compatible format
-            FIND_PATTERN=$(echo "$PATTERN" | sed 's/\*\*/*/g')
-            CHANGED_FILES=$(find . -path "./$FIND_PATTERN" -type f | sed 's|^\./||' | jq -R -s -c 'split("\n") | map(select(length > 0))')
+            # Extract directory prefix and file pattern
+            if [[ "$PATTERN" == *"**"* ]]; then
+             # Pattern has **: extract base directory and filename pattern
+             BASE_DIR=$(echo "$PATTERN" | cut -d'/' -f1)
+             FILE_PATTERN=$(echo "$PATTERN" | cut -d'/' -f2-)
+             CHANGED_FILES=$(find "$BASE_DIR" -type f -name "$FILE_PATTERN" 2>/dev/null | sed 's|^\./||' | jq -R -s -c 'split("\n") | map(select(length > 0))')
+            else
+              # Simple pattern without **: use -path directly
+              CHANGED_FILES=$(find . -path "./$PATTERN" -type f | sed 's|^\./||' | jq -R -s -c 'split("\n") | map(select(length > 0))')
+            fi
           else
             # Fallback: assume all files changed (conservative approach)
             CHANGED_FILES='[]'
