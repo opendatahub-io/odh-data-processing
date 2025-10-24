@@ -1,0 +1,118 @@
+name: 'Detect Changed Files'
+description: 'Detect changed files using native Git commands with support for PRs and push events'
+author: 'ODH Data Processing Team'
+
+inputs:
+  files:
+    description: 'File pattern to match (e.g., notebooks/**/*.ipynb)'
+    required: true
+  token:
+    description: 'GitHub token for API access'
+    required: false
+    default: ${{ github.token }}
+  base-sha:
+    description: 'Base SHA for comparison (auto-detected if not provided)'
+    required: false
+  head-sha:
+    description: 'Head SHA for comparison (auto-detected if not provided)'
+    required: false
+
+outputs:
+  all_changed_files:
+    description: 'JSON array of all changed files matching the pattern'
+    value: ${{ steps.detect.outputs.all_changed_files }}
+  has_changes:
+    description: 'Boolean indicating if any files changed'
+    value: ${{ steps.detect.outputs.has_changes }}
+  files_count:
+    description: 'Number of changed files'
+    value: ${{ steps.detect.outputs.files_count }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Detect changed files
+      id: detect
+      shell: bash
+      run: |
+        set -euo pipefail
+        
+        echo "🔍 Detecting changed files for pattern: ${{ inputs.files }}"
+        echo "📋 Event: ${{ github.event_name }}"
+        
+        # Determine comparison SHAs based on event type
+        if [ "${{ github.event_name }}" == "pull_request" ]; then
+          # For PRs, use provided SHAs or extract from event
+          if [ -n "${{ inputs.base-sha }}" ] && [ -n "${{ inputs.head-sha }}" ]; then
+            BASE_SHA="${{ inputs.base-sha }}"
+            HEAD_SHA="${{ inputs.head-sha }}"
+          else
+            BASE_SHA="${{ github.event.pull_request.base.sha }}"
+            HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+          fi
+          
+          echo "📊 Comparing PR: $BASE_SHA..$HEAD_SHA"
+          
+          # Get changed files for PR
+          CHANGED_FILES=$(git diff --name-only --diff-filter=ACMRT $BASE_SHA..$HEAD_SHA -- '${{ inputs.files }}' | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          
+        elif [ "${{ github.event_name }}" == "push" ]; then
+          # For push events, compare with previous commit
+          if [ -n "${{ inputs.base-sha }}" ]; then
+            BASE_SHA="${{ inputs.base-sha }}"
+            HEAD_SHA="${{ github.sha }}"
+          else
+            # Compare with previous commit
+            BASE_SHA="HEAD~1"
+            HEAD_SHA="HEAD"
+          fi
+          
+          echo "📊 Comparing push: $BASE_SHA..$HEAD_SHA"
+          
+          # Get changed files for push
+          CHANGED_FILES=$(git diff --name-only --diff-filter=ACMRT $BASE_SHA $HEAD_SHA -- '${{ inputs.files }}' | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          
+        else
+          # For other events (workflow_dispatch, schedule), assume no file-based filtering needed
+          echo "📊 Event type '${{ github.event_name }}' - returning all matching files"
+          
+          # Find all files matching pattern
+          if command -v find >/dev/null 2>&1; then
+            # Use find for better pattern matching
+            PATTERN="${{ inputs.files }}"
+            # Extract directory prefix and file pattern
+            if [[ "$PATTERN" == *"**"* ]]; then
+             # Pattern has **: extract base directory and filename pattern
+             BASE_DIR=$(echo "$PATTERN" | cut -d'/' -f1)
+             FILE_PATTERN=$(echo "$PATTERN" | cut -d'/' -f2-)
+             CHANGED_FILES=$(find "$BASE_DIR" -type f -name "$FILE_PATTERN" 2>/dev/null | sed 's|^\./||' | jq -R -s -c 'split("\n") | map(select(length > 0))')
+            else
+              # Simple pattern without **: use -path directly
+              CHANGED_FILES=$(find . -path "./$PATTERN" -type f | sed 's|^\./||' | jq -R -s -c 'split("\n") | map(select(length > 0))')
+            fi
+          else
+            # Fallback: assume all files changed (conservative approach)
+            CHANGED_FILES='[]'
+          fi
+        fi
+        
+        # Calculate if there are changes and file count
+        FILES_COUNT=$(echo "$CHANGED_FILES" | jq length)
+        HAS_CHANGES=$([ "$FILES_COUNT" -gt 0 ] && echo "true" || echo "false")
+        
+        # Output results
+        echo "📁 Found $FILES_COUNT changed files"
+        echo "$CHANGED_FILES" | jq -r '.[]' | while read -r file; do
+          [ -n "$file" ] && echo "  - $file"
+        done || true
+        
+        # Set outputs
+        echo "all_changed_files=$CHANGED_FILES" >> $GITHUB_OUTPUT
+        echo "has_changes=$HAS_CHANGES" >> $GITHUB_OUTPUT  
+        echo "files_count=$FILES_COUNT" >> $GITHUB_OUTPUT
+        
+        echo "✅ Detection complete: has_changes=$HAS_CHANGES, files_count=$FILES_COUNT"
+
+branding:
+  icon: 'search'
+  color: 'blue'
