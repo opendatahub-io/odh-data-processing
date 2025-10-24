@@ -29,10 +29,10 @@ def config():
         choices=[OPT_GLOSSARY_APPENDIX, OPT_GLOSSARY_HEADER, OPT_GLOSSARY_NONE],
     )
     parser.add_argument('--' + ARG_SHORT_CONTEXT, action="store_true", default=False)
-    parser.add_argument('--' + ARG_INPUT_QA_FILE, type=str, default=None, metavar="input_qa.csv")
-    parser.add_argument('--' + ARG_INPUT_GLOSSARY_FILE, type=str, default=None, metavar="input_glossary.csv")
-    parser.add_argument('--' + ARG_INPUT_CONTEXT_FILE, type=str, default=None, metavar="input_context.csv")
-    parser.add_argument('--' + ARG_OUTPUT_ICL_FILE, type=str, default=None, metavar="output_icl.jsonl")
+    parser.add_argument('--' + ARG_INPUT_QA_FILE, type=str, required=True, metavar="input_qa.csv")
+    parser.add_argument('--' + ARG_INPUT_GLOSSARY_FILE, type=str, required=True, metavar="input_glossary.csv")
+    parser.add_argument('--' + ARG_INPUT_CONTEXT_FILE, type=str, required=True, metavar="input_context.csv")
+    parser.add_argument('--' + ARG_OUTPUT_ICL_FILE, type=str, required=True, metavar="output_icl.jsonl")
 
     args = parser.parse_args()
 
