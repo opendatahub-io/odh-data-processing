@@ -41,9 +41,6 @@ def select_icl_sample(icl_df: pd.DataFrame, average_context_length: int, index: 
     
 def main()-> None:
 
-    # if len(sys.argv) != 4:
-    #     print("Usage: python script.py <input_context.csv> <input_icl.jsonl> <output_seed.jsonl")
-    #     sys.exit(1)
     args = config()
     input_context_path = args[ARG_INPUT_CONTEXT_FILE]
     input_icl_path = args[ARG_INPUT_ICL_FILE]
