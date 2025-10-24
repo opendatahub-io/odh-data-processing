@@ -8,29 +8,29 @@ import itertools
 import jsonl_util
 import context_util
 
-ARG_OPTION="glossary_option"
+# ARG_OPTION="glossary_option"
 ARG_SHORT_CONTEXT="short_context"
 ARG_INPUT_QA_FILE="qa_file"
-ARG_INPUT_GLOSSARY_FILE="glossary_file"
+# ARG_INPUT_GLOSSARY_FILE="glossary_file"
 ARG_INPUT_CONTEXT_FILE="context_file"
 ARG_OUTPUT_ICL_FILE="out_icl_file"
-OPT_GLOSSARY_APPENDIX="appendix"
-OPT_GLOSSARY_HEADER="header"
-OPT_GLOSSARY_NONE="none"
+# OPT_GLOSSARY_APPENDIX="appendix"
+# OPT_GLOSSARY_HEADER="header"
+# OPT_GLOSSARY_NONE="none"
 NUM_ICL_QA_EXAMPLES=3
 
 def config():
     # print("Usage: python script.py <option> <input_qa.csv> <input_glossary.csv> <output_context.csv")
     parser = argparse.ArgumentParser(description="Make in-context learning examples from QAs and glossaries.")
-    parser.add_argument(
-        '--' + ARG_OPTION, 
-        type=str, 
-        default=OPT_GLOSSARY_APPENDIX, 
-        choices=[OPT_GLOSSARY_APPENDIX, OPT_GLOSSARY_HEADER, OPT_GLOSSARY_NONE],
-    )
+    # parser.add_argument(
+    #     '--' + ARG_OPTION, 
+    #     type=str, 
+    #     default=OPT_GLOSSARY_APPENDIX, 
+    #     choices=[OPT_GLOSSARY_APPENDIX, OPT_GLOSSARY_HEADER, OPT_GLOSSARY_NONE],
+    # )
     parser.add_argument('--' + ARG_SHORT_CONTEXT, action="store_true", default=False)
     parser.add_argument('--' + ARG_INPUT_QA_FILE, type=str, required=True, metavar="input_qa.csv")
-    parser.add_argument('--' + ARG_INPUT_GLOSSARY_FILE, type=str, required=True, metavar="input_glossary.csv")
+    # parser.add_argument('--' + ARG_INPUT_GLOSSARY_FILE, type=str, required=True, metavar="input_glossary.csv")
     parser.add_argument('--' + ARG_INPUT_CONTEXT_FILE, type=str, required=True, metavar="input_context.csv")
     parser.add_argument('--' + ARG_OUTPUT_ICL_FILE, type=str, required=True, metavar="output_icl.jsonl")
 
@@ -87,15 +87,12 @@ def main()-> None:
 
     args = config()
 
-    option = args[ARG_OPTION]
     input_qa_path = args[ARG_INPUT_QA_FILE]
-    # input_glossary_path = args[ARG_INPUT_GLOSSARY_FILE]
     input_context_path = args[ARG_INPUT_CONTEXT_FILE]
     output_icl_path = args[ARG_OUTPUT_ICL_FILE]
     short_context = args[ARG_SHORT_CONTEXT]
 
     qa_df = pd.read_csv(input_qa_path, encoding="utf8")
-    # glossary_df = pd.read_csv(input_glossary_path, encoding="utf8")
     context_df = pd.read_csv(input_context_path, encoding="utf8")
     ncontext_df = context_df.query("section != -1")
     

@@ -208,14 +208,12 @@ options:
 `make_icl.py` is used to make in-context learning examples from QAs and glossaries for the teacher model of SDG.
 This program is specific to the Teigaku Genzei FAQ documents. This program is called from `make_icl.sh`.
 ```
-usage: make_icl.py [-h] [--glossary_option {appendix,header,none}] [--short_context SHORT_CONTEXT] [--qa_file input_qa.csv] [--glossary_file input_glossary.csv] [--context_file input_context.csv] [--out_icl_file output_icl.jsonl]
+usage: make_icl.py [-h] [--short_context SHORT_CONTEXT] [--qa_file input_qa.csv] [--context_file input_context.csv] [--out_icl_file output_icl.jsonl]
 ```
 options:
 - `-h, --help` :            show this help message and exit
-- `--glossary_option {appendix,header,none}` : Currently not used.
 - `--short_context SHORT_CONTEXT` : A boolean option {True, False}. If True, the context of an ICL example (i.e., `icl_document`) becomes shorter than one section. The context only contains texts that are enough to generate three ICL questions. Otherwise, one context is one section. 
 - `--qa_file input_qa.csv` Input Question - Answer pair file. See ["Input file format"](#input-file-format) above.
-- `--glossary_file input_glossary.csv` : Input glossary file. The columns are: `Term`, `Description`. 
 - `--context_file input_context.csv` : Input context file. See the description of `make_context.py` above.
 - `--out_icl_file output_icl.jsonl` : Output ICL example file. Each line of the file has the following format:
     - `{"icl_document": "...", "icl_query_1": "....", "icl_response_1": "...", "icl_query_2": "...", "icl_response_2": "...", "icl_query_3": "...", "icl_response_3": "..."}`
