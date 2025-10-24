@@ -41,6 +41,7 @@ jobs:
           ipython kernel install --name "python3" --user
 
       - name: Validate Notebooks with pytest
+        if: steps.changed-files.outputs.has_changes == 'true'
         run: |
           export CHANGED_NOTEBOOKS='${{ steps.changed-files.outputs.all_changed_files }}'
           
