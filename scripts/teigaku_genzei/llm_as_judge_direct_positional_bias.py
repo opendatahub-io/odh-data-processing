@@ -47,10 +47,22 @@ class LLMJudgeDirectPositionalBias(LLMJudgeDirect):
             print(f"LLMJudgeDirectPositionalBias.prepare() ci_scores: {self.ci_scores}")
             self.reduction_map = {"mean": [self.main_score] + self.ci_scores}
 
+        def get_pb_score(
+                result: Dict[str, str], 
+                criteria: CriteriaWithOptions,
+                fallback_score: float,
+                ) -> float:
+            option_map = criteria.option_map if (criteria is not None) and (criteria.option_map is not None) else None
+            if option_map is None:
+                return 1.0
+            selected_option = result.get(backward_selected_option_name)
+            score = option_map.get(selected_option, 1) if selected_option is not None else fallback_score
+            return score
+        
         pb_scores = [
-            self.criteria.option_map.get(result.get(backward_selected_option_name, "NO_RESULT"), 1)
-            if (self.criteria is not None) and (self.criteria.option_map is not None) else 1
-            for result in results
+            # self.criteria.option_map.get(result.get(backward_selected_option_name, "NO_RESULT"), 1)
+            # if (self.criteria is not None) and (self.criteria.option_map is not None) else 1
+            get_pb_score(result, self.criteria, result[self.main_score]) for result in results
         ]
         pb_results = [
             result | {
