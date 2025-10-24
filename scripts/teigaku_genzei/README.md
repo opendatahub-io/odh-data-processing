@@ -113,7 +113,7 @@ The test and evaluation is implemented in `test_qa.py`.
 This program is used to test a model with a zero-shot QA task.
 
 ```
-python test_qa.py [-h] [--model_path MODEL_PATH] [--test_file TEST_FILE] [--test_language TEST_LANGUAGE] [--out_result_file OUT_RESULT_FILE] [--out_global_score_file OUT_GLOBAL_SCORE_FILE] [--judge_module JUDGE_MODULE] [--api_url API_URL] [--api_key API_KEY] [--server_type {hf,openai,vllm-remote}] [--data_classification {public,proprietary}] [--instructtion INSTRUCTTION]
+python test_qa.py [-h] [--model_path MODEL_PATH] [--test_file TEST_FILE] [--test_language TEST_LANGUAGE] [--out_result_file OUT_RESULT_FILE] [--out_global_score_file OUT_GLOBAL_SCORE_FILE] [--judge_module JUDGE_MODULE] [--api_url API_URL] [--api_key API_KEY] [--server_type {hf,openai,vllm-remote}] [--data_classification {public,proprietary}] [--instruction INSTRUCTION]
 ```
 
 options:
@@ -131,7 +131,7 @@ options:
     - `openai` : The model is accessed via OpenAI API. The endpoint URL is specified with `--api_url` option. The model name is specified with `--model_path` option. Environment variable `OPENAI_API_KEY`, or `--api_key` option is used to configure its API key. Note that the environment variable might be shared with the API key for the LLM-as-a-Judge. See ["One-time setup"](#one-time-setup) above. Note that `--data_classification` option must be set to `public` to use this option. 
     - `vllm-remote` : The model is accessed via OpenAI API. The endpoint URL is specified with `--api_url` option. The model name is specified with `--model_path` option. Environment variable `VLLM-REMOTE_API_KEY`, or `--api_key` option is used to configure its API key. Note that the environment variable might be shared with the API key for the LLM-as-a-Judge. See ["One-time setup"](#one-time-setup) above. Note that `--data_classification` option must be set to `public` or `proprietary` to use this option.
 - `--data_classification {public,proprietary}` : This option specifies the confidentiality of the test data specified in `--test_file`. This classification is used to avoid accidents such as confidential information being sent to a public LLM API service. The default is `proprietary`. Note that, in Unitxt, most of the public / commercial LLM service providers including the ones for test model and for LLM-as-a-Judge are configured to accept only `public` datasets. See also `--server_type` option. See also [unitxt.inference module — Unitxt](https://www.unitxt.ai/en/latest/unitxt.inference.html) to see the accepted data classification of LLM services. See [Sensitive data in unitxt — Unitxt](https://www.unitxt.ai/en/latest/docs/data_classification_policy.html) to learn more about the data classification.
-- `--instructtion INSTRUCTTION` : The instruction of the prompt. The default is one of {"ja": "以下の質問に答えてください。", "en": "Answer the following question."}, depending on the value of `--test_language` option.
+- `--instruction INSTRUCTION` : The instruction of the prompt. The default is one of {"ja": "以下の質問に答えてください。", "en": "Answer the following question."}, depending on the value of `--test_language` option.
 
 See also `test_single.sh` as an example of the command line options.
 
