@@ -108,8 +108,6 @@ def main()-> None:
     ], axis=1).rename(columns={
         "context": "document",
     })
-    # .drop(columns=["section", "qindex", "qlist"])
-    print(out_df.columns)
     out_df.to_json(output_context_path, orient="records", lines=True, force_ascii=False)
 
 if __name__ == "__main__":
