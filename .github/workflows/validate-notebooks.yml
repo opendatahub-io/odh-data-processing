@@ -1,0 +1,61 @@
+name: Validate Notebooks
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - "notebooks/**/*.ipynb"
+      - ".github/workflows/validate-notebooks.yml"
+  push:
+    branches: [ main ]
+    paths:
+      - "notebooks/**/*.ipynb"
+      - ".github/workflows/validate-notebooks.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate_notebooks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get changed notebook files
+        id: changed-files
+        uses: ./.github/actions/detect-changed-files
+        with:
+          files: 'notebooks/**/*.ipynb'
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install Testing Dependencies
+        run: |
+          pip install -r tests/requirements.txt
+          ipython kernel install --name "python3" --user
+
+      - name: Validate Notebooks with pytest
+        if: steps.changed-files.outputs.has_changes == 'true'
+        run: |
+          export CHANGED_NOTEBOOKS='${{ steps.changed-files.outputs.all_changed_files }}'
+          
+          echo "🧪 Running pytest validation on notebooks..."
+          echo "📋 Changed notebooks: $CHANGED_NOTEBOOKS"
+          
+          pytest tests/test_notebooks_validate.py
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: validation-results
+          path: |
+            .pytest_cache/
+            pytest.log
+          retention-days: 7
