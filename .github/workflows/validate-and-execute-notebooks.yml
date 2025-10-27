@@ -1,4 +1,4 @@
-name: Smoke Tests for Notebooks
+name: Validation & Smoke Tests for Notebooks
 
 on:
   pull_request:
@@ -105,8 +105,11 @@ jobs:
 
       - name: Install Testing Tools
         run: |
-          pip install papermill ipykernel
+          pip install papermill ipykernel nbstripout
           ipython kernel install --name "python3" --user
+
+      - name: Run Formatting Tests
+        run: make format-notebooks-check
 
       - name: Execute Notebooks
         run: |

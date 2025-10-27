@@ -1,28 +1,26 @@
-name: Pre-commit checks
+name: Python Formatting Validation
 
 on:
+  workflow_dispatch:
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
       - "**/*.py"
-      - "**/*.ipynb"
       - ".pre-commit-config.yaml"
+      - "Makefile"
       - "pyproject.toml"
+      - ".github/workflow/validate-python.yml"
   pull_request_target:
     types: [closed]
     paths:
       - "**/*.py"
-      - "**/*.ipynb"
       - ".pre-commit-config.yaml"
+      - "Makefile"
       - "pyproject.toml"
-
-concurrency:
-  group: pre-commit-${{ github.ref }}z
-  cancel-in-progress: true
+      - ".github/workflow/validate-python.yml"
 
 jobs:
-  pre-commit:
-    if: github.event_name != 'pull_request_target' || github.event.pull_request.merged == true
+  formatting-test:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -38,16 +36,8 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Cache pre-commit envs
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pre-commit
-          key: pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
+      - name: Install python formatting test dependencies
+        run: pip install ruff
 
-      - name: Install pre-commit
-        run: pip install pre-commit
-
-      - name: Run pre-commit
-        uses: pre-commit/action@v3.0.1
-        with:
-          extra_args: --all-files --show-diff-on-failure
+      - name: Run Formatting Tests
+        run: make format-python-check
