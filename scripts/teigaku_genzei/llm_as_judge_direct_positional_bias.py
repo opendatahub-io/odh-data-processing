@@ -51,18 +51,19 @@ class LLMJudgeDirectPositionalBias(LLMJudgeDirect):
                 result: Dict[str, str], 
                 criteria: CriteriaWithOptions,
                 fallback_score: float,
+                out_of_range_score: float,
                 ) -> float:
             option_map = criteria.option_map if (criteria is not None) and (criteria.option_map is not None) else None
             if option_map is None:
-                return 1.0
+                return fallback_score
             selected_option = result.get(backward_selected_option_name)
-            score = option_map.get(selected_option, 1) if selected_option is not None else fallback_score
+            score = option_map.get(selected_option, out_of_range_score) if selected_option is not None else fallback_score
             return score
         
         pb_scores = [
             # self.criteria.option_map.get(result.get(backward_selected_option_name, "NO_RESULT"), 1)
             # if (self.criteria is not None) and (self.criteria.option_map is not None) else 1
-            get_pb_score(result, self.criteria, result[self.main_score]) for result in results
+            get_pb_score(result, self.criteria, result[self.main_score], 0.0) for result in results
         ]
         pb_results = [
             result | {
