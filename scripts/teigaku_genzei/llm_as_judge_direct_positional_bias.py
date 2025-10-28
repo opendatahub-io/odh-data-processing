@@ -51,26 +51,41 @@ class LLMJudgeDirectPositionalBias(LLMJudgeDirect):
                 result: Dict[str, str], 
                 criteria: CriteriaWithOptions,
                 fallback_score: float,
-                out_of_range_score: float,
+                default_pb_score: float,
                 ) -> float:
+            """
+            Calculate the PB score based on the evaluation results.
+
+            PB (positional bias) is the difference of the selection of an option between forward- and backward-ordered options.
+            To mitigate PB, we compute the average of the scores associated with the selected options from forward- and backward-ordered options.
+
+            This function takes evaluation results, criteria with options, a fallback score, and an out-of-range score as input and returns the calculated PB score.
+
+            :param result: A dictionary containing the evaluation results.
+            :param criteria: A CriteriaWithOptions object holding the criteria.
+            :param fallback_score: The fallback score to use if criteria are not present or backward selected option is not present.
+                Note that this is the case where no LLM Judge evaluation with backward options is available.
+            :param default_pb_score: The score to use if the selected option is not found in criteria.option_map.
+                Note that this is an erroneous case; this score is used only when the judge's inference result does not contain a meaningful option value.
+            :return: The calculated PB score.
+            """
             option_map = criteria.option_map if (criteria is not None) and (criteria.option_map is not None) else None
             if option_map is None:
                 return fallback_score
             selected_option = result.get(backward_selected_option_name)
-            score = option_map.get(selected_option, out_of_range_score) if selected_option is not None else fallback_score
+            score = option_map.get(selected_option, default_pb_score) if selected_option is not None else fallback_score
             return score
-        
+
+        default_pb_score = 0.0 # This value is intentionally set to 0 to indicate that the judge's inference result does not contain a meaningful option value.
         pb_scores = [
-            # self.criteria.option_map.get(result.get(backward_selected_option_name, "NO_RESULT"), 1)
-            # if (self.criteria is not None) and (self.criteria.option_map is not None) else 1
-            get_pb_score(result, self.criteria, result[self.main_score], 0.0) for result in results
+            get_pb_score(result, self.criteria, result.get(self.main_score, default_pb_score), default_pb_score) for result in results
         ]
         pb_results = [
             result | {
                 backward_score_name: pb_score,
-                average_score_name: (result[self.main_score] + pb_score) / 2,
+                average_score_name: (result.get(self.main_score, default_pb_score) + pb_score) / 2,
             }
-            for result, pb_score in zip(results, pb_scores)
+            for result, pb_score in zip(results, pb_scores, strict=True)
         ]
         return pb_results
     
